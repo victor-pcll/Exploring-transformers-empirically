@@ -2,6 +2,27 @@ __pycache__/
 *.pyc
 *.pyo
 *.ipynb_checkpoints
+
+# Data and results
 results/
 data/
+
+# Environment
 .env
+.venv/
+venv/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
