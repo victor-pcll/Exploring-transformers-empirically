@@ -47,7 +47,7 @@ def AIM_batch(X, S, verbose=False):
 
     # Subtract trace part
     trace_part = torch.trace(S)
-    I = torch.eye(T, dtype=X.dtype, device=X.device).unsqueeze(0)  # 1 x T x T
-    XSXt_centered = XSXt - trace_part * I
+    Identity = torch.eye(T, dtype=X.dtype, device=X.device).unsqueeze(0)  # 1 x T x T
+    XSXt_centered = XSXt - trace_part * Identity
 
     return XSXt_centered / np.sqrt(d)

@@ -6,13 +6,13 @@ from utils.convert import convert_numeric_config
 import yaml
 import os
 from datetime import datetime
+import torch
 
 # Désactiver MPS et CUDA
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "0"
 os.environ["CUDA_VISIBLE_DEVICES"] = ""
 # Forcer CPU
 os.environ["PYTORCH_DEVICE"] = "cpu"
-import torch
 
 # Forcer CPU partout
 os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "0"
