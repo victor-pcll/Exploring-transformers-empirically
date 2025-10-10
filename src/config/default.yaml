@@ -1,0 +1,20 @@
+# hyperparameters
+d: 100          # embedding dimenson 
+r: 100          # attention width
+L: 1            # number of attention layers
+T: 2            # 
+beta: 1.0       # inverse temperature
+norm_init: 1.0  # initialization scale
+samples: 8      # nbr of samples
+Delta_in: 0.5   # input noise
+rho: 1.0        # noise level
+alpha: np.linspace(0.005, 1.0, 3) 
+
+#ADAM GD parameters
+lr: 1e-1        # learning rate
+n_iter: 1000    # number of iterations
+tol: 1e-6       # tolerance for convergence
+lmbda: 0.0001    # weight decay
+
+# verbosity
+verbose: False   # print loss during training

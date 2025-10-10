@@ -1,0 +1,13 @@
+[project]
+name = "tpiv-simulations"
+version = "0.1.0"
+description = "Simulations of neural networks for TP IV project"
+authors = [{name = "Victor Peucelle"}]
+
+dependencies = [
+    "torch",
+    "numpy",
+    "matplotlib",
+    "pyyaml",
+    "tqdm"
+]
