@@ -20,9 +20,9 @@ def AIM(X, S, verbose=False):
         print(f"h input shapes : X {X.shape}, S {S.shape}")
 
     trace_part = torch.trace(S)
-    I = torch.eye(T, dtype=X.dtype, device=X.device)
+    Identity = torch.eye(T, dtype=X.dtype, device=X.device)
 
-    return (X @ S @ X.T - trace_part * I) / np.sqrt(d)
+    return (X @ S @ X.T - trace_part * Identity) / np.sqrt(d)
 
 
 def AIM_batch(X, S, verbose=False):
