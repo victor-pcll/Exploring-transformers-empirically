@@ -18,15 +18,15 @@ def convert_numeric_config(config, verbose=False):
     for k, v in config.items():
         if isinstance(v, str):
             try:
-                config[k] = int(v) # Essayer de convertir en int
+                config[k] = int(v)  # Essayer de convertir en int
             except ValueError:
                 try:
-                    config[k] = float(v) # Essayer de convertir en float
+                    config[k] = float(v)  # Essayer de convertir en float
                 except ValueError:
-                    pass # Laisser tel quel si ce n’est ni int ni float
+                    pass  # Laisser tel quel si ce n’est ni int ni float
         elif isinstance(v, dict):
-            convert_numeric_config(v)
-            
+            return convert_numeric_config(v)
+
     if verbose:
         print(f"[Config] Converted config: {config}")
 

@@ -2,6 +2,7 @@ import torch
 from src.models.neural_net import NeuralNet
 from src.training.optimizer import train
 
+
 def Adam_opt(config, verbose=False):
     """
     Train a neural network using the Adam optimizer.

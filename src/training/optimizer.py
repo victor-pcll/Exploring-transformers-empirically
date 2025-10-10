@@ -1,5 +1,4 @@
 import torch
-import numpy as np
 from tqdm import trange
 
 
@@ -17,7 +16,7 @@ def train(
 ):
     """
     Train a model with L2 regularization (like train_student_on_data).
-    
+
     Args:
         model: PyTorch model (e.g., Net)
         data: input tensor (N, L, D)
@@ -39,7 +38,7 @@ def train(
     for t in trange(n_iter, desc=desc, leave=False):
         optimizer.zero_grad()
 
-        lam_scaled = lam / np.sqrt(rho)
+        lam_scaled = lam / rho ** 0.5
         output = model(data)
         data_loss = torch.sum((output - target) ** 2)
         reg_loss = lam_scaled * torch.sum(model.fc1.weight ** 2)
@@ -58,7 +57,7 @@ def train(
 
     # Final evaluation
     with torch.no_grad():
-        lam_scaled = lam / np.sqrt(rho)
+        lam_scaled = lam / rho ** 0.5
         output_final = model(data)
         data_loss_final = torch.sum((output_final - target) ** 2).item()
         reg_loss_final = (lam_scaled * torch.sum(model.fc1.weight ** 2)).item()

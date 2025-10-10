@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+
 def init_torch(seed=42, verbose=False):
     """
     Initialise l'environnement PyTorch :
@@ -24,11 +25,11 @@ def init_torch(seed=42, verbose=False):
 
     # --- Détection du device ---
     if torch.backends.mps.is_available():
-        device = torch.device("mps")   # GPU Apple
+        device = torch.device("mps")  # GPU Apple
     elif torch.cuda.is_available():
         device = torch.device("cuda")  # GPU NVIDIA
     else:
-        device = torch.device("cpu")   # Fallback CPU
+        device = torch.device("cpu")  # Fallback CPU
 
     # --- Options PyTorch ---
     torch.backends.cudnn.deterministic = True

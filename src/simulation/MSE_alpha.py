@@ -53,7 +53,7 @@ def MSE_alpha(
 
         mean_loss, mse_train, mse_test = [], [], []
 
-        if verbose == True:
+        if verbose:
             print(f"\nAlpha = {alpha:.3f}, n = {n}")
 
         # ----------------------
@@ -71,7 +71,7 @@ def MSE_alpha(
             S_train.requires_grad_(True)
             opt = torch.optim.Adam([S_train], lr=lr)
 
-            if verbose == True:
+            if verbose:
                 print(f"  Sample {mu + 1}/{samples}")
 
             # ----------------------
@@ -112,7 +112,7 @@ def MSE_alpha(
         mean = np.mean(mean_loss)
         err = np.std(mean_loss) / np.sqrt(len(mean_loss))
 
-        if verbose == True:
+        if verbose:
             print(
                 f"Loss: {mean:.6f} ± {err:.6f} | "
                 f"MSE_train: {np.mean(mse_train):.6f} | "

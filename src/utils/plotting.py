@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 
+
 def plot_loss(losses, title="Loss over Iterations", xlabel="Iteration", ylabel="Loss",
               log_scale=False, save_path=None, show=True):
     """
@@ -38,6 +39,7 @@ def plot_loss(losses, title="Loss over Iterations", xlabel="Iteration", ylabel="
         plt.show()
     else:
         plt.close()
+
 
 def plot_mse_results(alphas, est_gen, est_err, MSE_train, MSE_test,
                      xlabel=r"$\alpha$", log_x=False, log_y=False,
@@ -107,4 +109,4 @@ def plot_mse_results(alphas, est_gen, est_err, MSE_train, MSE_test,
     if show:
         plt.show()
     else:
-        plt.close()
+        plt.close() 
