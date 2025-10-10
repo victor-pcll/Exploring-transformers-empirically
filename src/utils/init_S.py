@@ -2,10 +2,13 @@ import torch
 import numpy as np
 from utils.sym_mat import sym_torch
 
-def init_S(d, r=0, type=1, gradient=False, verbosity=0, device='cpu', dtype=torch.float32):
+
+def init_S(
+    d, r=0, type=1, gradient=False, verbosity=0, device="cpu", dtype=torch.float32
+):
     """
     Initialize covariance / weight matrix S.
-    
+
     Args:
         d (int): input dimension
         r (int): hidden dimension (used if type=2)
@@ -14,14 +17,14 @@ def init_S(d, r=0, type=1, gradient=False, verbosity=0, device='cpu', dtype=torc
         verbosity (int): debug prints
         device (str): 'cpu' or 'cuda'
         dtype (torch.dtype): tensor dtype
-    
+
     Returns:
         S (torch.Tensor): d x d symmetric matrix
     """
     if type == 1:
         if verbosity >= 3:
             print("Initialization by symmetric S matrix")
-        n = d*(d+1)//2
+        n = d * (d + 1) // 2
         A = torch.randn(n, device=device, dtype=dtype)
         S = sym_torch(A)
 

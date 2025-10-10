@@ -38,10 +38,10 @@ def train(
     for t in trange(n_iter, desc=desc, leave=False):
         optimizer.zero_grad()
 
-        lam_scaled = lam / rho ** 0.5
+        lam_scaled = lam / rho**0.5
         output = model(data)
         data_loss = torch.sum((output - target) ** 2)
-        reg_loss = lam_scaled * torch.sum(model.fc1.weight ** 2)
+        reg_loss = lam_scaled * torch.sum(model.fc1.weight**2)
         total_loss = data_loss + reg_loss
 
         total_loss.backward()
@@ -57,9 +57,9 @@ def train(
 
     # Final evaluation
     with torch.no_grad():
-        lam_scaled = lam / rho ** 0.5
+        lam_scaled = lam / rho**0.5
         output_final = model(data)
         data_loss_final = torch.sum((output_final - target) ** 2).item()
-        reg_loss_final = (lam_scaled * torch.sum(model.fc1.weight ** 2)).item()
+        reg_loss_final = (lam_scaled * torch.sum(model.fc1.weight**2)).item()
 
     return model, data_loss_final, reg_loss_final, losses

@@ -8,7 +8,7 @@ def convert_numeric_config(config, verbose=False):
         Dictionnaire de configuration avec des valeurs sous forme de chaînes.
     verbose : bool, optional
         Si True, affiche le dictionnaire converti (par défaut False).
-        
+
     Returns
     -------
     dict

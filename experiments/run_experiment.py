@@ -24,11 +24,11 @@ with open("src/config/default.yaml") as f:
     config = yaml.safe_load(f)
 
 # Initialiser les graines
-device = init_torch(42, verbose = config["verbose"])
+device = init_torch(42, verbose=config["verbose"])
 dtype = torch.float32
 
 # Convertir les paramètres numériques
-config = convert_numeric_config(config, verbose = config["verbose"])
+config = convert_numeric_config(config, verbose=config["verbose"])
 
 # Lancer l'expérience (CPU)
 alphas, losses, losses_err, MSE_train, MSE_test = MSE_alpha(config, device, dtype)
@@ -39,7 +39,17 @@ os.makedirs(run_folder, exist_ok=True)
 
 # Visualiser les pertes
 fig_path = os.path.join(run_folder, "MSE_alpha_plot.png")
-plot_mse_results(alphas, losses, losses_err, MSE_train, MSE_test, log_x=False, log_y=False, save_path=fig_path, show=True)
+plot_mse_results(
+    alphas,
+    losses,
+    losses_err,
+    MSE_train,
+    MSE_test,
+    log_x=False,
+    log_y=False,
+    save_path=fig_path,
+    show=True,
+)
 print(f"Figure saved to: {fig_path}")
 
 # Prepare results dictionary

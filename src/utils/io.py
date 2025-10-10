@@ -1,10 +1,8 @@
-
 import os
 import pickle
 import json
 from datetime import datetime
 from tqdm import tqdm
-
 
 
 def save_results(
@@ -57,6 +55,7 @@ def save_results(
                     pickle.dump(results, f)
                 pbar.update(1)
         elif format == "json":
+
             def safe_serialize(obj):
                 """
                 Try to serialize an object to JSON, otherwise return its string representation.
@@ -79,9 +78,10 @@ def save_results(
             raise ValueError(f"[IO] Unsupported format: {format}")
 
         if verbose:
-            print(f"[IO] Results saved to {results_filename} inside folder {full_run_path}")
+            print(
+                f"[IO] Results saved to {results_filename} inside folder {full_run_path}"
+            )
         print("[IO] Save completed.")
 
     except Exception as e:
         print(f"[IO] Error saving results to {filename}: {e}")
-
