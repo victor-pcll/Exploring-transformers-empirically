@@ -197,8 +197,9 @@ def run_experiment(D=100, L=2, beta=1.0,
     else:
         df_results.to_csv(logs_csv_path, mode='a', header=True, index=False)
 
-     # --- Save config as CSV ---
+    # --- Save config as CSV ---
     config_dict = {
+        "alpha": alpha,
         "D": D,
         "L": L,
         "rho": rho,
