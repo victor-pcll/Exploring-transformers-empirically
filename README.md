@@ -49,13 +49,16 @@ tpiv-simulations/
 │       ├── ERM_tied_exp_cluster.py
 │       └── ERM_tied_exp_cluster.sbatch      
 │
-├── results/                    # tous les résultats cluster
-│   ├── run_<JOBID>/            # dossier unique par job
-│   │   ├── logs/
-│   │   ├── plots/
-│   │   ├── checkpoints/
-│   │   └── config_used.yaml
-│   └── summary.csv             # optionnel : résumé des runs
+├── results/                   
+│   └── run_<JOBID>/     
+│       ├── config.csv
+│       ├── err.txt
+│       ├── log.txt
+│       ├── experiment.txt
+│       ├── logs_<RUN>.txt
+│       ├── summary.csv 
+│       ├── W_runs_<RUN>.pkl 
+│       └── config_used.pkl
 │
 ├── notebooks/
 │   ├── analysis.ipynb
