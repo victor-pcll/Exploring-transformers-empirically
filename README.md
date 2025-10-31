@@ -1,12 +1,24 @@
 # Exploring Transformers Empirically  
 *Architecture, regularization, and their impact on expressivity, spectral properties, and learning across synthetic and real data*
 
+---
+
+## 🛠️ Technologies & Libraries
+
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white)
+![NumPy](https://img.shields.io/badge/NumPy-013243?style=flat&logo=numpy&logoColor=white)
+![Matplotlib](https://img.shields.io/badge/Matplotlib-11557C?style=flat&logo=matplotlib&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-150458?style=flat&logo=pandas&logoColor=white)
+![Scikit-learn](https://img.shields.io/badge/Scikit--learn-F7931E?style=flat&logo=scikit-learn&logoColor=white)
+
+---
+
 This repository contains the code, experiments, and supplementary materials for the paper:
 
 > **Exploring Transformers Empirically**  
 > *Author(s): Peucelle Victor*  
 > [Link to the paper (arXiv / conference / journal if available)]
-
 ---
 
 ## 📖 Overview  
@@ -23,41 +35,38 @@ This repository provides modular Python code and simulations for the TP IV proje
 ```
 tpiv-simulations/
 │
-├── pyproject.toml              
-├── README.md                   # Project overview and instructions
-├── .gitignore
-├── data/                       # Data and data generators
-│   ├── synthetic/              # Simulated datasets
-│   └── raw/                    # Raw data if applicable
+├── experiments/               
+│   ├── BO/                  
+│   │   ├── BO_exp_cluster.py
+│   │   └── BO_exp_cluster.sbatch
+│   ├── ERM_untied/                  
+│   │   ├── ERM_untied_exp_cluster.py
+│   │   └── ERM_untied_exp_cluster.sbatch
+│   ├── ERM_S/                  
+│   │   ├── ERM_S_exp_cluster.py
+│   │   └── ERM_S_exp_cluster.sbatch
+│   └── ERM_tied/                  
+│       ├── ERM_tied_exp_cluster.py
+│       └── ERM_tied_exp_cluster.sbatch      
 │
-├── src/                        # Source code
-│   ├── __init__.py
-│   ├── models/                 # Network class definitions
-│   │   ├── __init__.py
-│   │   └── neural_net.py
-│   ├── training/               # Optimization, loss functions, metrics
-│   │   ├── __init__.py
-│   │   └── optimizer.py
-│   ├── simulation/             # Experiment scripts and loops
-│   │   ├── __init__.py
-│   │   └── run_experiment.py
-│   ├── utils/                  # Utilities (plotting, IO, seeds)
-│   │   ├── __init__.py
-│   │   ├── plotting.py
-│   │   ├── io.py
-│   │   └── seeds.py
-│   └── config/                 # Configuration files
-│       ├── __init__.py
-│       └── default.yaml
+├── results/                    # tous les résultats cluster
+│   ├── run_<JOBID>/            # dossier unique par job
+│   │   ├── logs/
+│   │   ├── plots/
+│   │   ├── checkpoints/
+│   │   └── config_used.yaml
+│   └── summary.csv             # optionnel : résumé des runs
 │
-├── experiments/                # Notebooks and reproducible scripts
-│   ├── exp_symmetric_init.ipynb
-│   ├── exp_rho_variation.ipynb
-│   └── exp_generalization.ipynb
+├── notebooks/
+│   ├── analysis.ipynb
+│   └── sanity_check.ipynb
 │
-└── results/                    # Outputs: figures, logs, checkpoints
-    ├── figures/
-    └── logs/
+├── test/
+│   ├── test_cluster.py
+│   └── test_cluster.sbatch
+│
+├── requirements.txt
+└── pyproject.toml / setup.py  
 ```
 
 ---
@@ -75,7 +84,9 @@ pip install .
 Run experiments using:
 
 ```bash
-python -m src.simulation.run_experiment
+chmod +x .venv/bin/activate                          
+. .venv/bin/activate  
+python -m experiments.run_experiment
 ```
 
 ---
