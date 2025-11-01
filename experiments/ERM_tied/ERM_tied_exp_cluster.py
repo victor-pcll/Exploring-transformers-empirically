@@ -8,48 +8,63 @@ import sys
 import logging
 import os
 
-def init_torch(seed=42, verbose=True):
+# -------------------------------
+# Initialisation
+# -------------------------------
+def init_torch(seed=42):
     torch.manual_seed(seed)
     np.random.seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
-    if verbose:
-        print(f"Random seeds initialized to {seed}")
 
+# -------------------------------
+# Logger helper
+# -------------------------------
+def get_logger(run_dir, run_index, verbose=True):
+    job_id = os.environ.get("SLURM_JOB_ID", datetime.now().strftime("%Y%m%d_%H%M%S"))
+    log_file = os.path.join(run_dir, f"experiment_{run_index}_{job_id}.log")
+    logger = logging.getLogger(f"logger_{run_index}_{job_id}")
+    logger.setLevel(logging.DEBUG if verbose else logging.INFO)
 
-def convert_numeric_config(config, verbose=True):
-    for k, v in config.items():
-        if isinstance(v, str):
-            try:
-                config[k] = int(v)  # Essayer de convertir en int
-            except ValueError:
-                try:
-                    config[k] = float(v)  # Essayer de convertir en float
-                except ValueError:
-                    pass  # Laisser tel quel si ce n’est ni int ni float
-        elif isinstance(v, dict):
-            return convert_numeric_config(v)
+    if logger.hasHandlers():
+        logger.handlers.clear()
 
-    print(f"[Config] Converted config: {config}")
-    return config
+    # File handler
+    fh = logging.FileHandler(log_file, mode='a')
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+    logger.addHandler(fh)
 
+    # Console handler
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.INFO)
+    ch.setFormatter(logging.Formatter('%(levelname)s - %(message)s'))
+    logger.addHandler(ch)
+
+    return logger, log_file
+
+# -------------------------------
+# Neural network
+# -------------------------------
 class Net(nn.Module):
-    def __init__(self, input_dim, hidden_dim, number_tokens, norm=1.0, beta=1.0):
+    def __init__(self, input_dim, hidden_dim, number_tokens, norm=1.0, beta=1.0, device="cpu"):
         super(Net, self).__init__()
         self.beta = beta
         self.D = input_dim
         self.L = number_tokens
         self.R = hidden_dim
-        self.fc1 = nn.Linear(input_dim, hidden_dim, bias=False)
+        self.device = device
+        self.fc1 = nn.Linear(input_dim, hidden_dim, bias=False).to(device)
         self.fc1.weight.data.normal_(0, norm)
 
-    def forward(self, x, delta_in):
+    def forward(self, x, delta_in=0.0):
+        x = x.to(self.device)
         sqrt_D = torch.sqrt(torch.tensor(self.D, device=x.device, dtype=x.dtype))
         sqrt_R = torch.sqrt(torch.tensor(self.R, device=x.device, dtype=x.dtype))
         x = self.fc1(x) / sqrt_D
         attention_matrix = torch.einsum('nap,nbp->nab', x, x) / sqrt_R
         trace_part = torch.norm(self.fc1.weight)**2 / (sqrt_R * sqrt_D**2)
-        x = attention_matrix - trace_part * torch.eye(self.L, device=attention_matrix.device)
+        x = attention_matrix - trace_part * torch.eye(self.L, device=x.device)
         if delta_in > 0.0:
             M = torch.full((self.L, self.L), 1.0/torch.sqrt(torch.tensor(2.0, device=x.device, dtype=x.dtype)), device=x.device, dtype=x.dtype)
             M.diagonal().fill_(1)
@@ -60,60 +75,64 @@ class Net(nn.Module):
         x = nn.Softmax(dim=-1)(self.beta * x)
         return x
 
-
-def train_student_on_data(D, L, R, beta, lam, x_train, y_train, rho=1.0, T=1000, learning_rate=0.02, norm_init=1.0, tol=1e-8):
-    student = Net(D, R, L, norm=norm_init, beta=beta)
+# -------------------------------
+# Training student
+# -------------------------------
+def train_student_on_data(D, L, R, beta, lam, x_train, y_train, rho=1.0, T=1000, learning_rate=0.02, norm_init=1.0, tol=1e-8, device="cpu"):
+    student = Net(D, R, L, norm=norm_init, beta=beta, device=device)
     optimizer = torch.optim.Adam(student.parameters(), lr=learning_rate)
+    x_train = x_train.to(device)
+    y_train = y_train.to(device)
     prev_total_loss = None
+
     for t in range(T):
         optimizer.zero_grad()
         lam_stud = lam / np.sqrt(rho)
         y_pred = student(x_train, delta_in=0.0)
         data_loss = torch.sum((y_pred - y_train)**2)
-        reg_loss = lam_stud * torch.sum(student.fc1.weight ** 2)
+        reg_loss = lam_stud * torch.sum(student.fc1.weight**2)
         total_loss = data_loss + reg_loss
         total_loss.backward()
         optimizer.step()
+
         cur = float(total_loss.item())
         if prev_total_loss is not None and abs(cur - prev_total_loss) < tol and t > 100:
             break
         prev_total_loss = cur
+
     with torch.no_grad():
         lam_stud2 = lam / np.sqrt(rho)
         y_pred_final = student(x_train, delta_in=0.0)
         data_loss_final = torch.sum((y_pred_final - y_train)**2).item()
-        reg_loss_final = (lam_stud2 * torch.sum(student.fc1.weight ** 2)).item()
+        reg_loss_final = (lam_stud2 * torch.sum(student.fc1.weight**2)).item()
+
     W_student = student.fc1.weight.detach().cpu().numpy()
     return W_student, data_loss_final, reg_loss_final
 
-
+# -------------------------------
+# S_MSE helper
+# -------------------------------
 def compute_S_from_W(W, R, D):
     return (W.T @ W) / np.sqrt(R * D)
-
 
 def S_MSE(W_student, W_teacher, R, R_star, D):
     S_stud = compute_S_from_W(W_student, R, D)
     S_teach = compute_S_from_W(W_teacher, R_star, D)
-    return float(((S_stud - S_teach) ** 2).sum() / D)
+    return float(((S_stud - S_teach)**2).sum() / D)
 
-
-def run_experiment(alpha_idx=0, D=100, L=2, rho=1.0, rho_star=0.5, beta=1.0,
-                   lam_list=[0.1, 0.01, 0.001, 0.0001, 0.00001], Delta_list=[0.0], Delta_in=0.5,
-                   samples=8, T=10000, learning_rate=0.1, norm_init=1.0,
-                   tol=1e-7, N_test=2000, base_dir="./results", verbose=False, alpha_list = np.linspace(0.005, 0.5, 10),
-                   run_index=None):
+# -------------------------------
+# Run experiment
+# -------------------------------
+def run_experiment(alpha_list, base_dir, run_index, D, L, rho, rho_star, beta, lam_list, Delta_list, Delta_in,
+                   samples, T, learning_rate, norm_init, tol, N_test, device, logger):
 
     all_results = []
-
-    if run_index is not None and alpha_list is not None:
-        alpha_list = [alpha_list[run_index]]
 
     for alpha_idx, alpha in enumerate(alpha_list):
 
         R = int(rho * D)
         R_star = int(rho_star * D)
         beta_star = beta
-
         os.makedirs(base_dir, exist_ok=True)
 
         for lam_cur in lam_list:
@@ -121,50 +140,45 @@ def run_experiment(alpha_idx=0, D=100, L=2, rho=1.0, rho_star=0.5, beta=1.0,
 
                 N = int(alpha * D**2)
                 with torch.no_grad():
-                    teacher = Net(D, R_star, L, norm=1.0, beta=beta_star)
+                    teacher = Net(D, R_star, L, norm=1.0, beta=beta_star, device=device)
                 W_teacher = teacher.fc1.weight.detach().cpu().numpy()
 
-                MSE_runs = []
-                label_err_runs = []
-                label_err_runs_noise = []
-                train_data_runs = []
-                train_reg_runs = []
-                total_loss_runs = []
-                W_runs = []
+                # Storage
+                MSE_runs, label_err_runs, label_err_runs_noise = [], [], []
+                train_data_runs, train_reg_runs, total_loss_runs, W_runs = [], [], [], []
 
                 for i in range(samples):
-                    x_train = torch.normal(0, 1, (N, L, D))
+                    x_train = torch.normal(0, 1, (N, L, D), device=device)
                     with torch.no_grad():
                         y_train = teacher(x_train, delta_in=Delta_in)
 
                     W_last, data_loss_i, reg_loss_i = train_student_on_data(
                         D, L, R, beta, lam_cur, x_train, y_train,
-                        rho=rho, T=T, learning_rate=learning_rate, norm_init=norm_init, tol=tol
+                        rho=rho, T=T, learning_rate=learning_rate,
+                        norm_init=norm_init, tol=tol, device=device
                     )
                     W_runs.append(W_last)
-
                     mse_i = S_MSE(W_last, W_teacher, R, R_star, D)
                     MSE_runs.append(mse_i)
 
-                    x_test = torch.normal(0, 1, (N_test, L, D))
+                    x_test = torch.normal(0, 1, (N_test, L, D), device=device)
                     with torch.no_grad():
                         y_test_teacher = teacher(x_test, delta_in=0.0)
                         y_test_teacher_noise = teacher(x_test, delta_in=Delta_in)
 
-                    student_eval = Net(D, R, L, norm=0.0, beta=beta)
-                    with torch.no_grad():
-                        student_eval.fc1.weight.copy_(torch.tensor(W_last, dtype=student_eval.fc1.weight.dtype))
+                        student_eval = Net(D, R, L, norm=0.0, beta=beta, device=device)
+                        student_eval.fc1.weight.copy_(torch.tensor(W_last, dtype=student_eval.fc1.weight.dtype, device=device))
                         y_test_student = student_eval(x_test, delta_in=0.0)
-                        label_err_i = torch.sum((y_test_student - y_test_teacher) ** 2).item()
-                        label_err_i_noise = torch.sum((y_test_student - y_test_teacher_noise) ** 2).item()
+
+                        label_err_i = torch.sum((y_test_student - y_test_teacher)**2).item()
+                        label_err_i_noise = torch.sum((y_test_student - y_test_teacher_noise)**2).item()
 
                     label_err_runs.append(label_err_i)
                     label_err_runs_noise.append(label_err_i_noise)
                     train_data_runs.append(data_loss_i)
                     train_reg_runs.append(reg_loss_i)
-                    total_loss_runs.append((data_loss_i + reg_loss_i))
+                    total_loss_runs.append(data_loss_i + reg_loss_i)
 
-                # On peut retourner un dictionnaire ou l’enregistrer en CSV si besoin
                 results = {
                     "alpha": alpha,
                     "alpha_idx": alpha_idx,
@@ -181,209 +195,83 @@ def run_experiment(alpha_idx=0, D=100, L=2, rho=1.0, rho_star=0.5, beta=1.0,
                     "train_total_mean": float(np.mean(total_loss_runs)/D**2),
                     "W_runs": W_runs
                 }
+
                 all_results.append(results)
+                logger.info(f"🔹 [alpha={alpha:.4f}, lambda={lam_cur:.4f}] → MSE={results['MSE_mean']:.6f}")
 
-                if verbose :
-                    print(f"alpha={alpha:.6f}, lambda={lam_cur:.6f}, MSE={results['MSE_mean']:.6f} ± {results['MSE_std']:.6f}")
-
-    # Save logs and W_runs per alpha_idx to avoid overwriting
-    df_results = pd.DataFrame([{k: v for k, v in res.items() if k != "W_runs"} for res in all_results])
-    logs_csv_path = os.path.join(base_dir, f"logs_{run_index}.csv" if run_index is not None else "logs.csv")
+    # Save CSV & pickle
+    df_results = pd.DataFrame([{k:v for k,v in res.items() if k != "W_runs"} for res in all_results])
+    logs_csv_path = os.path.join(base_dir, f"logs_{run_index}.csv")
     df_results.to_csv(logs_csv_path, index=False)
 
-        # --- Save config as CSV ---
-    config_dict = {
-        "alpha": alpha,
-        "D": D,
-        "L": L,
-        "rho": rho,
-        "rho_star": rho_star,
-        "beta": beta,
-        "lam": lam_cur,
-        "Delta_in": Delta_in,
-        "samples": samples,
-        "T": T,
-        "learning_rate": learning_rate,
-        "norm_init": norm_init,
-        "tol": tol,
-        "N_test": N_test,
-        "base_dir": base_dir
-    }
-    config_df = pd.DataFrame([config_dict])
-    config_csv_path = os.path.join(base_dir, "config.csv")
-    if os.path.isfile(config_csv_path):
-        config_df.to_csv(config_csv_path, mode='a', header=False, index=False)
-    else:
-        config_df.to_csv(config_csv_path, mode='a', header=True, index=False)
-
-    # Sauvegarde de la liste de tous les W_runs dans un fichier pickle
     W_runs_all = [res["W_runs"] for res in all_results]
     pickle_path = os.path.join(base_dir, f"W_runs_{run_index}.pkl")
     with open(pickle_path, "wb") as f:
         pickle.dump(W_runs_all, f)
-        
-    print(f"[INFO] Sauvegarde effectuée dans {os.path.abspath(base_dir)}")
 
-    return df_results, alpha_list
+    logger.info(f"💾 Results saved for run_index={run_index}")
+    return df_results
 
-
-def get_run_dir(base_path="/home/peucelle/tpiv-simulations/results"):
-    now_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    run_dir = f"{base_path}/run_{now_str}"
-    os.makedirs(run_dir, exist_ok=True)
-    return run_dir
-
-
+# -------------------------------
+# Main
+# -------------------------------
 if __name__ == "__main__":
-
-    if len(sys.argv) > 1:
-        run_idx = int(sys.argv[1])
-    else:
-        run_idx = int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
-
-    run_dir = sys.argv[2] if len(sys.argv) > 2 else None
-
+    run_index = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("SLURM_ARRAY_TASK_ID", 0))
     job_id = os.environ.get("SLURM_JOB_ID", datetime.now().strftime("%Y%m%d_%H%M%S"))
-    if run_dir is None:
-        run_dir = get_run_dir()
+    run_dir = sys.argv[2] if len(sys.argv) > 2 else f"./results/run_{job_id}"
+    os.makedirs(run_dir, exist_ok=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Charger la configuration
+    # Logger centralisé
+    logger, log_file = get_logger(run_dir, run_index, verbose=True)
+
+    # Seeds
+    init_torch(42)
+    logger.info(f"🖥 Device: {device} | Run index: {run_index} | Job ID: {job_id}")
+
+    # Configuration
     config = {
-        "verbose": False,
-        "alpha_start": 0.005,
-        "alpha_end": 1.0,
-        "alpha_steps": 15,
-        "d": 100,
+        "D": 100,
         "L": 2,
+        "rho": 1.0,
+        "rho_star": 0.5,
         "beta": 1.0,
-        "lmbda": [0.1, 0.01, 0.001, 0.0001, 0.00001],
-        "Delta_in": 0.5,
+        "lam_list": [0.1, 0.01, 0.001, 0.0001, 0.00001],
         "Delta_list": [0.0],
+        "Delta_in": 0.5,
         "samples": 8,
         "T": 10000,
-        "lr": 0.1,
+        "learning_rate": 0.1,
         "norm_init": 1.0,
         "tol": 1e-6,
-        "n_test": 2000,
-        "rho": 1.0,
-        "rho_star": 0.5  
+        "N_test": 2000,
+        "alpha_start": 0.005,
+        "alpha_end": 1.0,
+        "alpha_steps": 15
     }
 
-    # Initialiser les graines
-    init_torch(42, verbose=config.get("verbose", True))
-
-    # Convertir les paramètres numériques
-    config = convert_numeric_config(config, verbose=config["verbose"])
     alpha_list = np.linspace(config["alpha_start"], config["alpha_end"], config["alpha_steps"])
 
-    # --- Configurer logging ---
-    log_file = os.path.join(run_dir, "experiment.txt")
-    logging.basicConfig(
-        filename=log_file,
-        filemode='a',
-        level=logging.INFO if config.get("verbose", True) else logging.WARNING,
-        format='%(asctime)s - %(levelname)s - %(message)s',
-    )
+    logger.info("========================================\n🧪 EXPERIMENT START\n----------------------------------------")
+    df_results = run_experiment(alpha_list=alpha_list,
+                                base_dir=run_dir,
+                                run_index=run_index,
+                                D=config["D"],
+                                L=config["L"],
+                                rho=config["rho"],
+                                rho_star=config["rho_star"],
+                                beta=config["beta"],
+                                lam_list=config["lam_list"],
+                                Delta_list=config["Delta_list"],
+                                Delta_in=config["Delta_in"],
+                                samples=config["samples"],
+                                T=config["T"],
+                                learning_rate=config["learning_rate"],
+                                norm_init=config["norm_init"],
+                                tol=config["tol"],
+                                N_test=config["N_test"],
+                                device=device,
+                                logger=logger)
 
-    # Print and log header block
-    header_lines = [
-        "========================================",
-        "        EXPERIMENT START",
-        "----------------------------------------",
-        f"Run index: {run_idx}",
-        f"Job ID: {job_id}",
-        f"Device: {device}",
-        f"Results directory: {run_dir}",
-        "========================================",
-    ]
-    header_msg = "\n".join(header_lines)
-    print(header_msg)
-    logging.info(header_msg)
-
-    # Print and log configuration summary
-    config_summary_lines = [
-        "--- Configuration ---",
-        f"D            : {config['d']}",
-        f"L            : {config['L']}",
-        f"alpha range  : {config['alpha_start']} → {config['alpha_end']} ({config['alpha_steps']} steps)",
-        f"rho values   : {config['rho']}",
-        f"learning rate: {config['lr']}",
-        f"samples      : {config['samples']}",
-        "---------------------",
-    ]
-    config_summary_msg = "\n".join(config_summary_lines)
-    print(config_summary_msg)
-    logging.info(config_summary_msg)
-
-    logging.info(f"[INFO] Using device: {device}")
-    logging.info(f"[INFO] Run index: {run_idx}")
-
-    # Appel simple avec l’alpha numéro 5
-    results, alphas = run_experiment(base_dir=run_dir,
-                                    D = config["d"],
-                                    L = config["L"],
-                                    rho = config["rho"],
-                                    rho_star = config["rho_star"],
-                                    beta = config["beta"],
-                                    lam_list = config["lmbda"],
-                                    Delta_list = config["Delta_list"],
-                                    Delta_in = config["Delta_in"],
-                                    samples = config["samples"],
-                                    T = config["T"],
-                                    learning_rate = config["lr"],
-                                    norm_init = config["norm_init"],
-                                    tol = config["tol"],
-                                    N_test = config["n_test"],
-                                    verbose = config["verbose"],
-                                    alpha_list= alpha_list,
-                                    run_index=run_idx)
-    
-    # Print and log footer block
-    footer_lines = [
-        "----------------------------------------",
-        "✅ Experiment finished successfully",
-        f"Results saved in: {run_dir}",
-        f"Logs CSV: logs_{run_idx}.csv",
-        "Config CSV: config.csv",
-        f"Pickle: W_runs_{run_idx}.pkl",
-        "---------------------------------------",
-        "",
-        "",
-    ]
-    footer_msg = "\n".join(footer_lines)
-    print(footer_msg)
-    logging.info(footer_msg)
-
-    # --- Sauvegarder config pour traçabilité ---
-    config["run_index"] = run_idx
-    config_path = os.path.join(run_dir, "config_used.pkl")
-    with open(config_path, "wb") as f:
-        pickle.dump(config, f)
-
-    results_path = os.path.join(run_dir, "results.pkl")
-    with open(results_path, "wb") as f:
-        pickle.dump(results, f)
-
-    logging.info("[INFO] Configuration and results saved")
-
-    # --- Create summary CSV in run_dir directly ---
-    summary_csv_path = os.path.join(run_dir, "summary.csv")
-    # Just copy the logs.csv to summary.csv as all results are in one single CSV already
-    logs_csv_path = os.path.join(run_dir, f"logs_{run_idx}.csv")
-    if os.path.isfile(logs_csv_path):
-        try:
-            df = pd.read_csv(logs_csv_path)
-
-            # Append new rows if file exists
-            if os.path.isfile(summary_csv_path):
-                df.to_csv(summary_csv_path, mode='a', header=False, index=False)
-            else:
-                df.to_csv(summary_csv_path, mode='w', header=True, index=False)
-
-            logging.info(f"[INFO] Summary CSV updated at {summary_csv_path}")
-        except Exception as e:
-            logging.warning(f"[ERR] Failed to update summary CSV: {e}")
-    else:
-        logging.warning("[ERR] logs.csv not found to update summary.csv")
+logger.info("✅ Experiment finished successfully")

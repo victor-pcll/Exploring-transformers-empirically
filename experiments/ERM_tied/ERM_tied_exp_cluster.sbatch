@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=BO_exp
+#SBATCH --job-name=ERM_tied_exp
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
