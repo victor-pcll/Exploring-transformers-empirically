@@ -68,8 +68,12 @@ tpiv-simulations/
 │   ├── test_cluster.py
 │   └── test_cluster.sbatch
 │
+├── adr/
+│   ├── 001-adr-cluster.md
+│   └── 002-adr-torch.md
+│
 ├── requirements.txt
-└── pyproject.toml / setup.py  
+└── pyproject.toml 
 ```
 
 ---

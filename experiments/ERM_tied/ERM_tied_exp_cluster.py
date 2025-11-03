@@ -128,6 +128,10 @@ def run_experiment(alpha_list, base_dir, run_index, D, L, rho, rho_star, beta, l
 
     all_results = []
 
+    if run_index is not None and alpha_list is not None:
+        alpha_list = [alpha_list[run_index]]
+
+
     for alpha_idx, alpha in enumerate(alpha_list):
 
         R = int(rho * D)
@@ -247,12 +251,13 @@ if __name__ == "__main__":
         "tol": 1e-6,
         "N_test": 2000,
         "alpha_start": 0.005,
-        "alpha_end": 1.0,
+        "alpha_end": 0.6,
         "alpha_steps": 15
     }
 
     alpha_list = np.linspace(config["alpha_start"], config["alpha_end"], config["alpha_steps"])
 
+    # --- Header log ---
     logger.info("========================================\n🧪 EXPERIMENT START\n----------------------------------------")
     df_results = run_experiment(alpha_list=alpha_list,
                                 base_dir=run_dir,
@@ -274,4 +279,50 @@ if __name__ == "__main__":
                                 device=device,
                                 logger=logger)
 
-logger.info("✅ Experiment finished successfully")
+    # -------------------------------
+    # Save configuration as CSV
+    # -------------------------------
+    config["run_index"] = run_index
+    config_csv_path = os.path.join(run_dir, "config.csv")
+    try:
+        df_config = pd.DataFrame([config])
+        df_config.to_csv(config_csv_path, index=False)
+        logger.info(f"💾 Configuration saved as CSV: {config_csv_path}")
+    except Exception as e:
+        logger.warning(f"[ERR] Failed to save config.csv: {e}")
+
+    # -------------------------------
+    # Update / create summary.csv
+    # -------------------------------
+    try:
+        logs_csv_path = os.path.join(run_dir, f"logs_{run_index}.csv")
+        summary_csv_path = os.path.join(run_dir, "summary.csv")
+
+        if os.path.isfile(logs_csv_path):
+            df_logs = pd.read_csv(logs_csv_path)
+
+            # Append new data if summary already exists
+            if os.path.isfile(summary_csv_path):
+                df_logs.to_csv(summary_csv_path, mode="a", header=False, index=False)
+            else:
+                df_logs.to_csv(summary_csv_path, mode="w", header=True, index=False)
+
+            logger.info(f"🧾 Summary CSV updated at {summary_csv_path}")
+        else:
+            logger.warning("[ERR] logs.csv not found — could not update summary.csv")
+    except Exception as e:
+        logger.warning(f"[ERR] Failed to update summary.csv: {e}")
+
+    # -------------------------------
+    # Footer log
+    # -------------------------------
+    footer_lines = [
+        "----------------------------------------",
+        "✅ Experiment finished successfully",
+        f"📂 Results saved in: {run_dir}",
+        f"📄 Logs: {log_file}",
+        f"🧾 Summary: {summary_csv_path}",
+        f"🧠 Config: {config_csv_path}",
+        "----------------------------------------\n\n",
+    ]
+    logger.info("\n" + "\n".join(footer_lines))

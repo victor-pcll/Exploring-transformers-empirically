@@ -3,12 +3,18 @@ name = "tpiv-simulations"
 version = "0.1.0"
 description = "Simulations of neural networks for TP IV project"
 authors = [{name = "Victor Peucelle"}]
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+keywords = ["neural-networks", "simulation", "deep-learning"]
 
 dependencies = [
-    "torch",
-    "numpy",
-    "matplotlib",
-    "pyyaml",
-    "tqdm",
-    "pandas",
+    "torch>=2.0.0",
+    "numpy>=1.25.0",
+    "matplotlib>=3.8.0",
+    "pandas>=2.1.0"
 ]
+
+[build-system]
+requires = ["setuptools>=65.5.1", "wheel"]
+build-backend = "setuptools.build_meta"

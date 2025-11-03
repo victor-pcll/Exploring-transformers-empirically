@@ -1,9 +1,7 @@
 torch
 numpy
 matplotlib
-pyyaml
-tqdm
+pandas
 flake8
 pytest
 pytest-cov
-pandas
