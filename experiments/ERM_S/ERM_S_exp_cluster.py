@@ -40,8 +40,22 @@ class Net(nn.Module):
         self.D = input_dim
         self.L = number_tokens
         self.S = nn.Linear(input_dim, input_dim, bias=False)
-        # Initialisation random
-        self.S.weight.data.uniform_(0.0, norm)
+        self.S.weight.data.uniform_(0.0, norm)         # Initialisation random
+
+    def init_teacher(self, R):
+        """
+        Initialize S as a PSD matrix: S = W W^T / sqrt(r * D)
+        where W is a random Gaussian matrix.
+        """
+        # Create a random weight matrix W ~ N(0, 1)
+        self.R = R
+        W = torch.randn(self.D, self.R, device=self.S.weight.device)
+        
+        # Compute PSD matrix
+        S_psd = (W @ W.T) / np.sqrt(self.R * self.D)
+        
+        # Copy into model weights
+        self.S.weight.data = S_psd.clone()
 
 
     def forward(self, x, delta_in):
@@ -96,6 +110,8 @@ def run_experiment(alpha_idx=0, D=100, L=2, rho=1.00, rho_star=0.5, beta=1.0,
 
     all_results = []
 
+    R_star = int(rho_star * D)
+
     if run_index is not None and alpha_list is not None:
         alpha_list = [alpha_list[run_index]]
 
@@ -109,13 +125,14 @@ def run_experiment(alpha_idx=0, D=100, L=2, rho=1.00, rho_star=0.5, beta=1.0,
                 N = int(alpha * D**2)
                 with torch.no_grad():
                     teacher = Net(D, L, norm=1.0, beta=beta_star)
+                    teacher.init_teacher(R_star)
                 S_teacher = teacher.S.weight.detach().cpu().numpy()
 
                 MSE_runs, label_err_runs, label_err_runs_noise = [], [], []
                 train_data_runs, train_reg_runs, total_loss_runs = [], [], []
                 S_runs = []
 
-                for i in range(samples):
+                for _ in range(samples):
                     x_train = torch.normal(0, 1, (N, L, D))
                     with torch.no_grad():
                         y_train = teacher(x_train, delta_in=Delta_in)
@@ -157,9 +174,9 @@ def run_experiment(alpha_idx=0, D=100, L=2, rho=1.00, rho_star=0.5, beta=1.0,
                     "MSE_mean": float(np.mean(MSE_runs)),
                     "MSE_std": float(np.std(MSE_runs, ddof=1)) if len(MSE_runs) > 1 else 0.0,
                     "label_err_mean": float(np.mean(label_err_runs)/D**2),
-                    "label_err_std": float(np.std(label_err_runs, ddof=1)/D**4) if len(label_err_runs) > 1 else 0.0,
+                    "label_err_std": float(np.std(label_err_runs, ddof=1)/D**2) if len(label_err_runs) > 1 else 0.0,
                     "label_err_mean_noise": float(np.mean(label_err_runs_noise)/D**2),
-                    "label_err_std_noise": float(np.std(label_err_runs_noise, ddof=1)/D**4) if len(label_err_runs_noise) > 1 else 0.0,
+                    "label_err_std_noise": float(np.std(label_err_runs_noise, ddof=1)/D**2) if len(label_err_runs_noise) > 1 else 0.0,
                     "train_data_mean": float(np.mean(train_data_runs)/D**2),
                     "train_reg_mean": float(np.mean(train_reg_runs)/D**2),
                     "train_total_mean": float(np.mean(total_loss_runs)/D**2),
@@ -231,9 +248,9 @@ if __name__ == "__main__":
     # Charger la configuration
     config = {
         "verbose": False,
-        "alpha_start": 0.005,
-        "alpha_end": 1.0,
-        "alpha_steps": 10,
+        "alpha_start": 0.0005,
+        "alpha_end": 0.05,
+        "alpha_steps": 15,
         "d": 100,
         "L": 2,
         "beta": 1.0,
@@ -247,7 +264,7 @@ if __name__ == "__main__":
         "tol": 1e-6,
         "n_test": 2000,
         "rho": 1.0,
-        "rho_star": 0.5  
+        "rho_star": 0.5
     }
 
     # Initialiser les graines

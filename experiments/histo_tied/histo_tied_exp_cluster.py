@@ -1,5 +1,7 @@
 from datetime import datetime
 import torch
+from torch.utils.data import Dataset, random_split, DataLoader
+from collections import Counter
 import numpy as np
 import pandas as pd
 import torch.nn as nn
@@ -43,28 +45,56 @@ def get_logger(run_dir, run_index, verbose=True):
 
     return logger, log_file
 
+def hist(s):
+  c = Counter(s)
+  c = {w: c[w] for w in c}
+  return [c[w] for w in s]
+
+class HistogramDataset(Dataset):
+    def __init__(self, seq_len, T, n_samples, seed=42):
+        self.seq_len = seq_len
+        self.T = T
+        self.n_samples = n_samples
+        rs = np.random.RandomState(seed)
+        self.X = rs.randint(0, T, (n_samples, seq_len))
+        # self.X = np.unique(self.X, axis=0)
+        self.y = np.empty_like(self.X)
+        self.n_samples = self.X.shape[0]
+        for i in range(self.n_samples):
+          self.y[i] = hist(self.X[i])
+
+    def __len__(self):
+        return self.n_samples
+
+    def __getitem__(self, idx):
+        return torch.tensor(self.X[idx],dtype=torch.long), torch.tensor(self.y[idx],dtype=torch.long)
+
 # -------------------------------
 # Neural network
 # -------------------------------
 class Net(nn.Module):
-    def __init__(self, input_dim, hidden_dim, number_tokens, norm=1.0, beta=1.0, device="cpu"):
+    def __init__(self, input_dim, hidden_dim, number_tokens, seq_len, norm=1.0, beta=1.0, device="cpu"):
         super(Net, self).__init__()
         self.beta = beta
         self.D = input_dim
         self.L = number_tokens
+        self.seq_len = seq_len
         self.R = hidden_dim
         self.device = device
-        self.fc1 = nn.Linear(input_dim, hidden_dim, bias=False).to(device)
+        self.embed = nn.Embedding(number_tokens, input_dim)
+        self.fc1 = nn.Linear(input_dim, hidden_dim, bias=False)
         self.fc1.weight.data.normal_(0, norm)
+        self.to(device)
 
     def forward(self, x, delta_in=0.0):
         x = x.to(self.device)
         sqrt_D = torch.sqrt(torch.tensor(self.D, device=x.device, dtype=x.dtype))
         sqrt_R = torch.sqrt(torch.tensor(self.R, device=x.device, dtype=x.dtype))
+        x = self.embed(x)     #  x.shape = (N, seq_len, input_dim)
         x = self.fc1(x) / sqrt_D
         attention_matrix = torch.einsum('nap,nbp->nab', x, x) / sqrt_R
         trace_part = torch.norm(self.fc1.weight)**2 / (sqrt_R * sqrt_D**2)
-        x = attention_matrix - trace_part * torch.eye(self.L, device=x.device)
+        x = attention_matrix - trace_part * torch.eye(self.seq_len, device=x.device)
         if delta_in > 0.0:
             M = torch.full((self.L, self.L), 1.0/torch.sqrt(torch.tensor(2.0, device=x.device, dtype=x.dtype)), device=x.device, dtype=x.dtype)
             M.diagonal().fill_(1)
@@ -78,33 +108,48 @@ class Net(nn.Module):
 # -------------------------------
 # Training student
 # -------------------------------
-def train_student_on_data(D, L, R, beta, lam, x_train, y_train, rho=1.0, T=1000, learning_rate=0.02, norm_init=1.0, tol=1e-8, device="cpu"):
-    student = Net(D, R, L, norm=norm_init, beta=beta, device=device)
+def train_student_on_data(D, L, R, beta, lam, train_dataset, seq_len, rho=1.0, 
+                             T = 1000, learning_rate=0.1, norm_init=1.0, tol=1e-6, device="cpu"):
+    """
+    Full-batch training for student network when L is small (e.g., L=2).
+    """
+    # --- Initialisation du réseau étudiant ---
+    student = Net(D, R, L, seq_len, norm=norm_init, beta=beta, device=device)
     optimizer = torch.optim.Adam(student.parameters(), lr=learning_rate)
-    x_train = x_train.to(device)
-    y_train = y_train.to(device)
+
+    # Récupérer tout le dataset en full batch
+    X_full = torch.stack([x for x, _ in train_dataset]).long().to(device)
+    y_full = torch.stack([y for _, y in train_dataset]).to(device)
+    y_full_norm = y_full / (y_full.sum(dim=-1, keepdim=True) + 1e-8)
+    
+    lam_stud = lam / np.sqrt(rho)
     prev_total_loss = None
 
-    for t in range(T):
+    for _ in range(T):
         optimizer.zero_grad()
-        lam_stud = lam / np.sqrt(rho)
-        y_pred = student(x_train, delta_in=0.0)
-        data_loss = torch.sum((y_pred - y_train)**2)
-        reg_loss = lam_stud * torch.sum(student.fc1.weight**2)
+        
+        y_pred = student(X_full, delta_in=0.0)
+        y_pred_diag = torch.diagonal(y_pred, dim1=1, dim2=2)
+
+        data_loss = torch.sum((y_pred_diag - y_full_norm) ** 2)
+        reg_loss = lam_stud * torch.sum(student.fc1.weight ** 2)
         total_loss = data_loss + reg_loss
+        
         total_loss.backward()
         optimizer.step()
-
-        cur = float(total_loss.item())
-        if prev_total_loss is not None and abs(cur - prev_total_loss) < tol and t > 100:
+        
+        # Critère d’arrêt
+        total_loss_val = total_loss.item()
+        if prev_total_loss is not None and abs(total_loss_val - prev_total_loss) < tol:
             break
-        prev_total_loss = cur
+        prev_total_loss = total_loss_val
 
+    # --- Évaluation finale ---
     with torch.no_grad():
-        lam_stud2 = lam / np.sqrt(rho)
-        y_pred_final = student(x_train, delta_in=0.0)
-        data_loss_final = torch.sum((y_pred_final - y_train)**2).item()
-        reg_loss_final = (lam_stud2 * torch.sum(student.fc1.weight**2)).item()
+        y_pred_final = student(X_full, delta_in=0.0)
+        y_pred_diag_final = torch.diagonal(y_pred_final, dim1=1, dim2=2)
+        data_loss_final = torch.sum((y_pred_diag_final - y_full_norm) ** 2).item()
+        reg_loss_final = (lam_stud * torch.sum(student.fc1.weight ** 2)).item()
 
     W_student = student.fc1.weight.detach().cpu().numpy()
     return W_student, data_loss_final, reg_loss_final
@@ -128,6 +173,10 @@ def run_experiment(alpha_list, base_dir, run_index, D, L, rho, rho_star, beta, l
 
     all_results = []
 
+    # --- ce sont des hyperparametres globaux ---
+    seq_len = 10
+    # --------------------------------
+
     if run_index is not None and alpha_list is not None:
         alpha_list = [alpha_list[run_index]]
 
@@ -144,44 +193,54 @@ def run_experiment(alpha_list, base_dir, run_index, D, L, rho, rho_star, beta, l
 
                 N = int(alpha * D**2)
                 with torch.no_grad():
-                    teacher = Net(D, R_star, L, norm=1.0, beta=beta_star, device=device)
+                    teacher = Net(D, R_star, L, seq_len, norm=1.0, beta=beta_star, device=device)
                 W_teacher = teacher.fc1.weight.detach().cpu().numpy()
 
                 # Storage
-                MSE_runs, label_err_runs, label_err_runs_noise = [], [], []
-                train_data_runs, train_reg_runs, total_loss_runs, W_runs = [], [], [], []
+                MSE_runs, label_err_runs, train_data_runs, train_reg_runs, total_loss_runs, W_runs = [], [], [], [], [], []
 
-                for i in range(samples):
-                    x_train = torch.normal(0, 1, (N, L, D), device=device)
-                    with torch.no_grad():
-                        y_train = teacher(x_train, delta_in=Delta_in)
+                for _ in range(samples):
+
+                    num_samples = N + N_test
+                    dataset = HistogramDataset(seq_len, L, num_samples)
+                    num_unique = len(dataset)
+
+                    if num_unique < 2:
+                        logger.warning(f"🚨 Dataset trop petit ({num_unique} unique samples), skip.")
+                        continue
+
+                    N_train = min(N, num_unique)
+                    N_test_adj = num_unique - N_train
+                    train_dataset, test_dataset = random_split(dataset, [N_train, N_test_adj])
 
                     W_last, data_loss_i, reg_loss_i = train_student_on_data(
-                        D, L, R, beta, lam_cur, x_train, y_train,
+                        D, L, R, beta, lam_cur, train_dataset, seq_len,
                         rho=rho, T=T, learning_rate=learning_rate,
                         norm_init=norm_init, tol=tol, device=device
                     )
+
                     W_runs.append(W_last)
                     mse_i = S_MSE(W_last, W_teacher, R, R_star, D)
                     MSE_runs.append(mse_i)
 
-                    x_test = torch.normal(0, 1, (N_test, L, D), device=device)
+                    student_eval = Net(D, R, L, seq_len, norm=0.0, beta=beta, device=device)
                     with torch.no_grad():
-                        y_test_teacher = teacher(x_test, delta_in=0.0)
-                        y_test_teacher_noise = teacher(x_test, delta_in=Delta_in)
-
-                        student_eval = Net(D, R, L, norm=0.0, beta=beta, device=device)
                         student_eval.fc1.weight.copy_(torch.tensor(W_last, dtype=student_eval.fc1.weight.dtype, device=device))
-                        y_test_student = student_eval(x_test, delta_in=0.0)
+                    student_eval.eval()
 
-                        label_err_i = torch.sum((y_test_student - y_test_teacher)**2).item()
-                        label_err_i_noise = torch.sum((y_test_student - y_test_teacher_noise)**2).item()
+                    test_loader = DataLoader(test_dataset)
+                    for x_test, y_test_teacher in test_loader:
+                        x_test = x_test.long().to(device)
+                        y_test_teacher = y_test_teacher.to(device)
+                        with torch.no_grad():
+                            y_test_student_full = student_eval(x_test, delta_in=0.0)
+                            y_test_student_diag = torch.diagonal(y_test_student_full, dim1=1, dim2=2)
+                            label_err_i = torch.mean((y_test_student_diag - y_test_teacher)**2).item()
 
-                    label_err_runs.append(label_err_i)
-                    label_err_runs_noise.append(label_err_i_noise)
-                    train_data_runs.append(data_loss_i)
-                    train_reg_runs.append(reg_loss_i)
-                    total_loss_runs.append(data_loss_i + reg_loss_i)
+                        label_err_runs.append(label_err_i)
+                        train_data_runs.append(data_loss_i)
+                        train_reg_runs.append(reg_loss_i)
+                        total_loss_runs.append(data_loss_i + reg_loss_i)
 
                 results = {
                     "alpha": alpha,
@@ -192,8 +251,6 @@ def run_experiment(alpha_list, base_dir, run_index, D, L, rho, rho_star, beta, l
                     "MSE_std": float(np.std(MSE_runs, ddof=1)) if len(MSE_runs) > 1 else 0.0,
                     "label_err_mean": float(np.mean(label_err_runs)/D**2),
                     "label_err_std": float(np.std(label_err_runs, ddof=1)/D**2) if len(label_err_runs) > 1 else 0.0,
-                    "label_err_mean_noise": float(np.mean(label_err_runs_noise)/D**2),
-                    "label_err_std_noise": float(np.std(label_err_runs_noise, ddof=1)/D**2) if len(label_err_runs_noise) > 1 else 0.0,
                     "train_data_mean": float(np.mean(train_data_runs)/D**2),
                     "train_reg_mean": float(np.mean(train_reg_runs)/D**2),
                     "train_total_mean": float(np.mean(total_loss_runs)/D**2),
@@ -244,14 +301,14 @@ if __name__ == "__main__":
         "lam_list": [0.1, 0.01, 0.001, 0.0001, 0.00001],
         "Delta_list": [0.0],
         "Delta_in": 0.5,
-        "samples": 8,
+        "samples": 16,
         "T": 10000,
         "learning_rate": 0.1,
         "norm_init": 1.0,
         "tol": 1e-6,
         "N_test": 2000,
-        "alpha_start": 0.005,
-        "alpha_end": 0.6,
+        "alpha_start": 0.05,
+        "alpha_end": 10.0,
         "alpha_steps": 15
     }
 
