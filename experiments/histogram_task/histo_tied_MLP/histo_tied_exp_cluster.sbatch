@@ -8,7 +8,7 @@
 #SBATCH --output=/home/peucelle/tpiv-simulations/results/run_%x/log.txt
 #SBATCH --error=/home/peucelle/tpiv-simulations/results/run_%x/err.txt
 #SBATCH --chdir /home/peucelle/tpiv-simulations/experiments
-#SBATCH --array=0-14
+#SBATCH --array=0-2
 #SBATCH --mem-per-cpu=7000
 
 # Create a timestamp for the run directory
@@ -29,4 +29,4 @@ export RUN_DIR=/home/peucelle/tpiv-simulations/results/run_${RUN_TIMESTAMP}
 mkdir -p $RUN_DIR
 
 # Pass both the task ID and run directory to the Python script
-$HOME/venv/bin/python /home/peucelle/tpiv-simulations/experiments/histo_tied/histo_tied_exp_cluster.py $SLURM_ARRAY_TASK_ID $RUN_DIR >> ${RUN_DIR}/log.txt 2>> ${RUN_DIR}/err.txt
+$HOME/venv/bin/python /home/peucelle/tpiv-simulations/experiments/histogram_task/histo_tied/histo_tied_exp_cluster.py $SLURM_ARRAY_TASK_ID $RUN_DIR >> ${RUN_DIR}/log.txt 2>> ${RUN_DIR}/err.txt

@@ -47,15 +47,10 @@ class Net(nn.Module):
         Initialize S as a PSD matrix: S = W W^T / sqrt(r * D)
         where W is a random Gaussian matrix.
         """
-        # Create a random weight matrix W ~ N(0, 1)
         self.R = R
         W = torch.randn(self.D, self.R, device=self.S.weight.device)
-        
-        # Compute PSD matrix
-        S_psd = (W @ W.T) / np.sqrt(self.R * self.D)
-        
-        # Copy into model weights
-        self.S.weight.data = S_psd.clone()
+        S_psd = (W @ W.T) / np.sqrt(self.R * self.D) # Compute PSD matrix
+        self.S.weight.data = S_psd.clone() # Copy into model weights
 
 
     def forward(self, x, delta_in):
@@ -254,10 +249,10 @@ if __name__ == "__main__":
         "d": 100,
         "L": 2,
         "beta": 1.0,
-        "lmbda": [0.1, 0.01, 0.001, 0.0001, 0.00001],
+        "lmbda": [0.1, 0.01, 0.001, 0.0001, 0.00005, 0.00001],
         "Delta_in": 0.5,
         "Delta_list": [0.0],
-        "samples": 8,
+        "samples": 12,
         "T": 10000,
         "lr": 0.1,
         "norm_init": 1.0,

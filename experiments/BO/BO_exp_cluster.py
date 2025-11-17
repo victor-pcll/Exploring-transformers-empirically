@@ -252,7 +252,7 @@ def main(run_index):
         "beta": 1.0,
         "lmbda": 0.0,
         "Delta_in": 0.0,
-        "samples": 8,
+        "samples": 16,
         "T": 10000,
         "lr": 0.01,
         "norm_init": 1.0,
@@ -361,7 +361,6 @@ def main(run_index):
 
     # --- Create summary CSV in run_dir directly ---
     summary_csv_path = os.path.join(run_dir, "summary.csv")
-    # Just copy the logs.csv to summary.csv as all results are in one single CSV already
     logs_csv_path = os.path.join(run_dir, f"logs_{run_index}.csv")
     if os.path.isfile(logs_csv_path):
         try:
@@ -381,7 +380,6 @@ def main(run_index):
 
 
 if __name__ == "__main__":
-    # Try to get run index from command line argument, else from SLURM_ARRAY_TASK_ID, else default to 0
     if len(sys.argv) > 1:
         run_idx = int(sys.argv[1])
     else:

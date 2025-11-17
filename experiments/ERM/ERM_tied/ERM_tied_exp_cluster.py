@@ -106,19 +106,24 @@ def train_student_on_data(D, L, R, beta, lam, x_train, y_train, rho=1.0, T=1000,
         data_loss_final = torch.sum((y_pred_final - y_train)**2).item()
         reg_loss_final = (lam_stud2 * torch.sum(student.fc1.weight**2)).item()
 
-    W_student = student.fc1.weight.detach().cpu().numpy()
-    return W_student, data_loss_final, reg_loss_final
+    return student, data_loss_final, reg_loss_final
 
 # -------------------------------
 # S_MSE helper
 # -------------------------------
 def compute_S_from_W(W, R, D):
-    return (W.T @ W) / np.sqrt(R * D)
+    # W is a torch.Tensor (R × D)
+    S = (W.t() @ W) / torch.sqrt(torch.tensor(R * D, dtype=W.dtype, device=W.device))
+    return S
 
 def S_MSE(W_student, W_teacher, R, R_star, D):
+    if isinstance(W_teacher, np.ndarray):
+        W_teacher = torch.tensor(W_teacher, dtype=W_student.dtype, device=W_student.device)
+
     S_stud = compute_S_from_W(W_student, R, D)
     S_teach = compute_S_from_W(W_teacher, R_star, D)
-    return float(((S_stud - S_teach)**2).sum() / D)
+
+    return float(((S_stud - S_teach)**2).sum().cpu().item() / D)
 
 # -------------------------------
 # Run experiment
@@ -156,13 +161,13 @@ def run_experiment(alpha_list, base_dir, run_index, D, L, rho, rho_star, beta, l
                     with torch.no_grad():
                         y_train = teacher(x_train, delta_in=Delta_in)
 
-                    W_last, data_loss_i, reg_loss_i = train_student_on_data(
+                    student_trained, data_loss_i, reg_loss_i = train_student_on_data(
                         D, L, R, beta, lam_cur, x_train, y_train,
                         rho=rho, T=T, learning_rate=learning_rate,
                         norm_init=norm_init, tol=tol, device=device
                     )
-                    W_runs.append(W_last)
-                    mse_i = S_MSE(W_last, W_teacher, R, R_star, D)
+                    W_runs.append(student_trained.fc1.weight.detach().cpu())
+                    mse_i = S_MSE(student_trained.fc1.weight.detach().cpu().numpy(), W_teacher, R, R_star, D)
                     MSE_runs.append(mse_i)
 
                     x_test = torch.normal(0, 1, (N_test, L, D), device=device)
@@ -170,8 +175,8 @@ def run_experiment(alpha_list, base_dir, run_index, D, L, rho, rho_star, beta, l
                         y_test_teacher = teacher(x_test, delta_in=0.0)
                         y_test_teacher_noise = teacher(x_test, delta_in=Delta_in)
 
-                        student_eval = Net(D, R, L, norm=0.0, beta=beta, device=device)
-                        student_eval.fc1.weight.copy_(torch.tensor(W_last, dtype=student_eval.fc1.weight.dtype, device=device))
+                        student_eval = student_trained
+                        student_eval.eval()
                         y_test_student = student_eval(x_test, delta_in=0.0)
 
                         label_err_i = torch.sum((y_test_student - y_test_teacher)**2).item()
@@ -201,14 +206,14 @@ def run_experiment(alpha_list, base_dir, run_index, D, L, rho, rho_star, beta, l
                 }
 
                 all_results.append(results)
-                logger.info(f"🔹 [alpha={alpha:.4f}, lambda={lam_cur:.4f}] → MSE={results['MSE_mean']:.6f}")
+                logger.debug(f"[alpha={alpha:.4f}, lambda={lam_cur:.4f}] MSE={results['MSE_mean']:.6f}")
 
     # Save CSV & pickle
     df_results = pd.DataFrame([{k:v for k,v in res.items() if k != "W_runs"} for res in all_results])
     logs_csv_path = os.path.join(base_dir, f"logs_{run_index}.csv")
     df_results.to_csv(logs_csv_path, index=False)
 
-    W_runs_all = [res["W_runs"] for res in all_results]
+    W_runs_all = [[w.cpu().numpy() for w in res["W_runs"]] for res in all_results]
     pickle_path = os.path.join(base_dir, f"W_runs_{run_index}.pkl")
     with open(pickle_path, "wb") as f:
         pickle.dump(W_runs_all, f)
@@ -241,10 +246,10 @@ if __name__ == "__main__":
         "rho": 1.0,
         "rho_star": 0.5,
         "beta": 1.0,
-        "lam_list": [0.1, 0.01, 0.001, 0.0001, 0.00001],
+        "lam_list": [0.1, 0.01, 0.001, 0.0005, 0.0001, 0.00001],
         "Delta_list": [0.0],
         "Delta_in": 0.5,
-        "samples": 8,
+        "samples": 16,
         "T": 10000,
         "learning_rate": 0.1,
         "norm_init": 1.0,
