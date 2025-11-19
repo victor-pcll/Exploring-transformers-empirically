@@ -1,6 +1,6 @@
 import torch
 from torch.utils.data import DataLoader
-import model.Net_tied as Net
+import src.model.Net_MLP as Net
 import numpy as np
 
 def train_student_on_data(config, lmbda, train_dataset):
@@ -15,14 +15,14 @@ def train_student_on_data(config, lmbda, train_dataset):
     """
 
     # --- Initialize the student network ---
-    student = Net(config["D"], config["R"], config["L"], config["seq_len"], norm=config["norm_init"], beta=config["beta"], device=config["device"]) # init student network
+    student = Net(config["D"], config["R"], config["L"], config["T"], norm=config["norm_init"], beta=config["beta"], device=config["device"]) # init student network
     optimizer = torch.optim.Adam(student.parameters(), lr=config["learning_rate"]) # optimizer
     
     train_loader = DataLoader(train_dataset, batch_size=len(train_dataset), shuffle=False)
     X_full, y_full = next(iter(train_loader))
     X_full = X_full.long().to(config["device"])
     y_full = y_full.to(config["device"])
-    y_full = y_full.unsqueeze(-1).expand(-1, -1, config["seq_len"])  # y_full.shape = (N, seq_len, seq_len)
+    y_full = y_full.unsqueeze(-1).expand(-1, -1, config["T"])  # y_full.shape = (N, T, T)
 
     y_counts = y_full[:, :, 0].float()           # shape: (N, L)
     y_true = y_counts / y_counts.sum(dim=1, keepdim=True)  # normalisation par séquence
@@ -32,7 +32,7 @@ def train_student_on_data(config, lmbda, train_dataset):
     seq_sample = None
 
     # --- Training loop ---
-    for t in range(config["T"]):
+    for t in range(config["max_iter"]):
         optimizer.zero_grad()
         lam_stud = lmbda / np.sqrt(config["rho"])
 

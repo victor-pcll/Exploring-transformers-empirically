@@ -4,14 +4,19 @@ import numpy as np
 import pickle
 import pandas as pd
 from torch.utils.data import DataLoader
-from dataset.histogram import prepare_dataset
-from training.train_student_histogram import train_student_on_data
+from src.dataset.split_dataset import prepare_dataset
+from src.training.train_student_histogram import train_student_on_data
 
 def run_experiment(config):
 
     all_results = []                    # To store all results
     attn_runs = []                      # To store attention matrices
     seq_runs = []                       # To store sample sequences associated with attention matrices    
+
+    # Pour stocker tous les h_pred_sample et y_true_sample pour tous les runs
+    h_pred_samples_all = []
+    y_true_samples_all = []
+    grad_align_all = []
 
     os.makedirs(config["run_dir"], exist_ok=True)
 
@@ -25,19 +30,28 @@ def run_experiment(config):
 
             # Pour stocker les runs de test pour ce set d'hyperparams
             test_seq_list_samples = []
-            attn_teacher_list_samples = []
             attn_student_list_samples = []
+
+            # Pour stocker h_pred/y_true pour chaque sample de ce set d'hyperparams
+            h_pred_samples = []
+            y_true_samples = []
 
             train_dataset, test_dataset = prepare_dataset(config)
 
             for _ in range(config["samples"]):
 
-                student_trained, data_loss_i, reg_loss_i, attn_matrix, seq_sample = train_student_on_data(
+                # Modification: récupère h_pred_sample et y_true_sample
+                student_trained, data_loss_i, reg_loss_i, attn_matrix, seq_sample, h_pred_sample, y_true_sample, grad_align_hist = train_student_on_data(
                     config, lam_cur, train_dataset
                 )
                 W_runs.append(student_trained.fc1.weight.detach().cpu().numpy())
                 attn_runs_samples.append(attn_matrix)
                 seq_runs_samples.append(seq_sample)
+
+                # Ajout: stocke h_pred_sample et y_true_sample
+                h_pred_samples.append(h_pred_sample)
+                y_true_samples.append(y_true_sample)
+                grad_align_all.append(grad_align_hist)
 
                 student_eval = student_trained
                 student_eval.eval()
@@ -47,7 +61,7 @@ def run_experiment(config):
 
                 for X_test_full, y_test_full in test_loader:
                     X_test_full = X_test_full.long().to(config["device"])
-                    y_test_full = y_test_full.cpu().numpy()  # fix important
+                    y_test_full = y_test_full.cpu().numpy()  
 
                     with torch.no_grad():
                         attn_test, h_test = student_eval(X_test_full, delta_in=0.0)
@@ -69,6 +83,10 @@ def run_experiment(config):
                 # Sauvegarde locale dans des listes pour analyse ultérieure
                 test_seq_list_samples.append(seq_np)
                 attn_student_list_samples.append(attn_student_np)
+
+            # Ajout: stocke les samples pour tous les runs
+            h_pred_samples_all.extend(h_pred_samples)
+            y_true_samples_all.extend(y_true_samples)
 
             attn_runs.append(np.mean(attn_runs_samples, axis=0))  # shape: (seq_len, seq_len)
             seq_runs.append(seq_runs_samples[0])  # shape: (seq_len,)
@@ -108,6 +126,18 @@ def run_experiment(config):
             "seq_samples": seq_runs
         }, f)
 
+    # Ajout: sauvegarde des h_pred_sample et y_true_sample pour chaque run dans un pickle
+    h_pred_y_true_save_path = os.path.join(config['run_dir'], f"h_pred_y_true_run{config['run_index']}.pkl")
+    with open(h_pred_y_true_save_path, "wb") as f:
+        pickle.dump({
+            "h_pred_samples": h_pred_samples_all,
+            "y_true_samples": y_true_samples_all
+        }, f)
+
+    # Save grad_align_all to pickle
+    grad_align_save_path = os.path.join(config["run_dir"], f"grad_align_run{config['run_index']}.pkl")
+    with open(grad_align_save_path, "wb") as f:
+        pickle.dump(grad_align_all, f)
 
     config["logger"].info(f"💾 Results saved for run_index={config['run_index']}")
     return df_results

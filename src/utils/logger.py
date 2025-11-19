@@ -1,7 +1,8 @@
 import logging, os, sys
 from datetime import datetime
 
-def get_logger(run_dir, run_index, verbose=True):
+def setup_logger(run_dir, run_index, verbose=True):
+    """Sets up a logger that logs to both a file and the console."""
     job_id = os.environ.get("SLURM_JOB_ID", datetime.now().strftime("%Y%m%d_%H%M%S"))
     log_file = os.path.join(run_dir, f"experiment_{run_index}_{job_id}.log")
     logger = logging.getLogger(f"logger_{run_index}_{job_id}")
