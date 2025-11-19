@@ -1,10 +1,14 @@
 # Exploring Transformers Empirically  
 *Architecture, regularization, and their impact on expressivity, spectral properties, and learning across synthetic and real data*
 
+<a href="https://victor-pcll.github.io/Exploring-transformers-empirically/">
+  <img src="https://img.shields.io/badge/Docs-00aced?style=flat&logo=read-the-docs&logoColor=white" alt="Documentation"/>
+</a>
+
 ---
 
 ## 🛠️ Technologies & Libraries
-
+n lw  eoc0-`
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white"/>
   <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white"/>
