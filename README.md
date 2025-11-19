@@ -9,7 +9,7 @@ This repository contains the code, experiments, and supplementary materials for 
 > *Author(s): Peucelle Victor*  
 > [Link to the paper (arXiv / conference / journal if available)]
 
-<a href="https://victor-pcll.github.io/Exploring-transformers-empirically/" align="center">
+<a href="https://victor-pcll.github.io/Exploring-transformers-empirically/">
   <img src="https://img.shields.io/badge/Docs-00aced?style=flat&logo=read-the-docs&logoColor=white" alt="Documentation"/>
 </a>
 
