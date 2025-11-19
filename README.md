@@ -1,7 +1,15 @@
 # Exploring Transformers Empirically  
 *Architecture, regularization, and their impact on expressivity, spectral properties, and learning across synthetic and real data*
 
-<a href="https://victor-pcll.github.io/Exploring-transformers-empirically/">
+---
+
+This repository contains the code, experiments, and supplementary materials for the paper:
+
+> **Exploring Transformers Empirically**  
+> *Author(s): Peucelle Victor*  
+> [Link to the paper (arXiv / conference / journal if available)]
+
+<a href="https://victor-pcll.github.io/Exploring-transformers-empirically/" align="center">
   <img src="https://img.shields.io/badge/Docs-00aced?style=flat&logo=read-the-docs&logoColor=white" alt="Documentation"/>
 </a>
 
@@ -18,13 +26,6 @@
   <img src="https://img.shields.io/badge/Scikit--learn-F7931E?style=flat&logo=scikit-learn&logoColor=white"/>
 </p>
 
----
-
-This repository contains the code, experiments, and supplementary materials for the paper:
-
-> **Exploring Transformers Empirically**  
-> *Author(s): Peucelle Victor*  
-> [Link to the paper (arXiv / conference / journal if available)]
 ---
 
 ## 📖 Overview  
