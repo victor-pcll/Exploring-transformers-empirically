@@ -8,7 +8,7 @@
 ---
 
 ## 🛠️ Technologies & Libraries
-n lw  eoc0-`
+
 <p align="center">
   <img src="https://img.shields.io/badge/Python-3776AB?style=flat&logo=python&logoColor=white"/>
   <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=flat&logo=pytorch&logoColor=white"/>
@@ -81,6 +81,15 @@ tpiv-simulations/
 ├── requirements.txt
 └── pyproject.toml 
 ```
+
+---
+
+## ADR (Architecture Decision Records)
+This project maintains important architectural decisions in the `adr/` folder:
+
+- [001-ADR Cluster](./adr/001-adr-cluster.md)
+- [002-ADR Torch](./adr/002-adr-torch.md)
+- [003-ADR Sphinx Documentation](./adr/003-adr-sphinx.md)
 
 ---
 
