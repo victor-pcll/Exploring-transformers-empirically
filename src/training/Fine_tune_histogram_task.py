@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader
 import src.model.Net_MLP as Net
 
-def train_student_on_data(config, lmbda, train_dataset):
+def fine_tune_student(config, lmbda, train_dataset):
     """
     Training du student network en mini-batch.
 
@@ -19,6 +19,11 @@ def train_student_on_data(config, lmbda, train_dataset):
     # --- Initialisation du réseau et de l'optimiseur ---
     student = Net(config["D"], config["R"], config["L"], config["T"],
                   norm=config["norm_init"], beta=config["beta"], device=config["device"])
+    
+    for p in student.parameters():
+        p.requires_grad = False
+    student.W0.weight.requires_grad = True
+
     optimizer = torch.optim.Adam(student.parameters(), lr=config["learning_rate"])
     
     # --- DataLoader avec mini-batch ---

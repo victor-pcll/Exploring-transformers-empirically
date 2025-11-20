@@ -3,29 +3,36 @@ import numpy as np
 import random
 import string
 
-def generate_random_pos(T):
+def generate_random_pos(T, L):
     """
-    Génère une composition aléatoire de T:
-    une liste d'entiers positifs, longueur variable,
-    dont la somme vaut exactement T.
+    Génère uniformément une composition aléatoire de T
+    dont la longueur (nombre de parts) est au plus L.
     """
     if T <= 0:
         raise ValueError("T doit être un entier positif.")
+    if L <= 0:
+        raise ValueError("L doit être un entier positif.")
 
+    # 1) Choisir uniformément une longueur k dans [1, min(T, L)]
+    k = random.randint(1, min(T, L))
+
+    # 2) Choisir k−1 positions de coupures dans les T−1 positions possibles
+    cuts = sorted(random.sample(range(1, T), k - 1))
+
+    # 3) Construire les segments entre les coupures
     parts = []
-    current = 1 
+    prev = 0
+    for c in cuts:
+        parts.append(c - prev)
+        prev = c
 
-    for _ in range(T - 1):
-        if random.random() < 0.5:
-            current += 1
-        else:
-            parts.append(current)
-            current = 1
+    # Dernier segment
+    parts.append(T - prev)
 
-    parts.append(current)
     return parts
 
-def generate_histogram_task(T):
+
+def generate_histogram_task(T, L):
     """
     À partir d'une liste d'entiers positifs (composition),
     renvoie :
@@ -34,7 +41,7 @@ def generate_histogram_task(T):
                          de la lettre présente à chaque position.
     """
     alphabet = string.ascii_uppercase
-    counts = generate_random_pos(T)
+    counts = generate_random_pos(T, L)
     
     if len(counts) > len(alphabet):
         raise ValueError("Alphabet insuffisant.")
@@ -58,7 +65,7 @@ class HistogramDataset(torch.utils.data.Dataset):
         self.L = config["L"]
         self.n_samples = config["N_total"]
         rs = np.random.RandomState(config["seed"])
-        self.y, self.X = generate_histogram_task(self.T)
+        self.X, self.y = generate_histogram_task(self.T, self.L)
 
     def __len__(self):
         return self.n_samples

@@ -38,8 +38,7 @@ if __name__ == "__main__":
         "alpha": alpha,
         "rho": 2.0,
         "beta": 1.0,
-        "lam_list": [0.01],
-        "Delta_list": [0.0],
+        "lam_list": [0.0],
         "Delta_in": 0.5,
         "samples": 1,
         "max_iter": 50000,
@@ -47,17 +46,19 @@ if __name__ == "__main__":
         "norm_init": 1.0,
         "tol": 1e-6,
         "N_test": 2000,
+        "N_valid": 2000,
         "T" : 30,
         "device": device,
         "logger": logger,
         "run_dir": run_dir,
         "run_index": run_index,
-        'seed': 42,
+        "seed": 42,
+        "batch_size": 256,
     }
 
     config["R"] = int(config["rho"] * config["D"])
     config["N_train"] = int(config["alpha"] * config["D"]**2)
-    config["N_total"] = config["N_train"] + config["N_test"]
+    config["N_total"] = config["N_train"] + config["N_test"] + config["N_valid"]
 
     # --- Header log ---
     logger.info("========================================\n🧪 EXPERIMENT START\n----------------------------------------")
