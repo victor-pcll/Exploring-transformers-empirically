@@ -11,26 +11,25 @@ def fine_tune_student(config, lmbda, train_dataset, student_trained):
         p.requires_grad = False
     student_trained.W0.weight.requires_grad = True
 
-    # Optimiseur sur W0 uniquement
-    optimizer = torch.optim.Adam([student_trained.W0.weight], lr=config["learning_rate"])
+    optimizer = torch.optim.Adam([student_trained.W0.weight], lr=config["learning_rate_fine_tune"])
+    criterion = torch.nn.MSELoss()
     
     train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
     
     loss_prev = None
 
-    for t in range(config["max_iter"]):
+    for t in range(config["max_fine_tune_iter"]):
+        student_trained.train()
         epoch_loss = 0.0
         for X_batch, y_batch in train_loader:
             X_batch = X_batch.long().to(config["device"])
-            y_batch = y_batch.to(config["device"])
+            y_batch = y_batch.float().to(config["device"])
             
             optimizer.zero_grad()
             _, y_student = student_trained(X_batch, delta_in=0.0)
             
-            # --- Data loss ---
-            data_loss = torch.mean((y_student - y_batch) ** 2)
+            data_loss = criterion(y_student, y_batch)
             
-            # --- L2 regularization sur W0 uniquement ---
             reg_loss = lmbda * torch.sum(student_trained.W0.weight**2) if lmbda > 0 else 0.0
             
             total_loss = data_loss + reg_loss
@@ -46,6 +45,7 @@ def fine_tune_student(config, lmbda, train_dataset, student_trained):
         loss_prev = loss_cur
 
     # --- Évaluation finale sur tout le dataset ---
+    student_trained.eval()
     full_loader = DataLoader(train_dataset, batch_size=len(train_dataset), shuffle=False)
     with torch.no_grad():
         X_full, y_full = next(iter(full_loader))

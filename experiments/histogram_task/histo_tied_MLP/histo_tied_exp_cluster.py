@@ -27,7 +27,7 @@ if __name__ == "__main__":
     # Alpha list
     alpha_start = 0.05
     alpha_end = 1.0
-    alpha_steps = 3
+    alpha_steps = 20
     alpha_list = np.linspace(alpha_start, alpha_end, alpha_steps).tolist()
     alpha = alpha_list[run_index] if run_index < len(alpha_list) else alpha_list[-1]
 
@@ -35,20 +35,21 @@ if __name__ == "__main__":
     config = {
         "D": 100,
         "L": 15,
-        "MLP_dim": 50,
+        "T" : 30,
+        "MLP_dim": 15,
         "alpha": alpha,
         "rho": 1.0,
         "beta": 1.0,
-        "lam_list": [0.0],
-        "Delta_in": 0.5,
-        "samples": 1,
-        "max_iter": 50000,
-        "learning_rate": 0.1,
+        "lam_list": [0.0001],
+        "samples": 4,
+        "max_iter": 5000,
+        "max_fine_tune_iter": 1000,
+        "learning_rate": 0.01,
+        "learning_rate_fine_tune": 0.001,
         "norm_init": 1.0,
         "tol": 1e-6,
         "N_test": 2000,
         "N_valid": 2000,
-        "T" : 30,
         "device": device,
         "logger": logger,
         "run_dir": run_dir,
