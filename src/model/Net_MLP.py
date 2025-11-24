@@ -12,8 +12,8 @@ class Net(torch.nn.Module):
         self.device = device
         self.embed = torch.nn.Embedding(number_tokens, input_dim)
         self.relu = torch.nn.ReLU()
-        self.W1 = torch.nn.Linear(MLP_dim, T, bias=True)
-        self.W2 = torch.nn.Linear(T, MLP_dim, bias=False)
+        self.W1 = torch.nn.Linear(T, MLP_dim, bias=True)
+        self.W2 = torch.nn.Linear(MLP_dim, T, bias=False)
         self.W0 = torch.nn.Linear(input_dim, hidden_dim, bias=False)
         self.W0.weight.data.normal_(0, norm)
         self.to(device)
@@ -33,8 +33,8 @@ class Net(torch.nn.Module):
             eps[..., j, i] = eps[..., i, j]
             x = x + torch.sqrt(torch.tensor(delta_in, device=x.device, dtype=x.dtype)) * eps * M
         x = torch.nn.Softmax(dim=-1)(self.beta * x) * x   # x.shape = (N, T, T)
-        x = self.W1(x) # x.shape = (N, MLP_dim, T)
-        x = self.relu(x) # x.shape = (N, MLP_dim, T)
+        x = self.W1(x) # x.shape = (N, T, MLP_dim)
+        x = self.relu(x) # x.shape = (N, T, MLP_dim)
         x = self.W2(x) # x.shape = (N, T, T)
         y = x.sum(dim=-1) # y.shape = (N, T)
         return x, y

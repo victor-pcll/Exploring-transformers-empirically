@@ -380,7 +380,48 @@ Here is an example SLURM batch script:
 | `#SBATCH --error=/home/peucelle/tpiv-simulations/results/run_%j/err_%j_%a.txt`    | Standard error file                          | File where stderr is written. `%j` is the job ID, `%a` is the array index.                         |
 | `#SBATCH --chdir /home/peucelle/tpiv-simulations/experiments`                     | Working directory                           | Directory where the script will run.                                                              |
 | `#SBATCH --array=0-9`              | Job array                                   | Submits 10 jobs (indexes 0 to 9) in an array, useful for running multiple experiments.            |
-| `#SBATCH --mem-per-cpu=9000`        | Memory per CPU                             | Allocates 9000 MB (9 GB) of RAM per CPU core.                                                     |
+| `#SBATCH --mem-per-cpu=9000`        | Memory per CPU                             | Allocates 9000 MB (9 GB) of RAM per CPU core.     |
+
+
+---
+
+## 9️⃣ Cluster Environment Tests                                              
+
+To ensure that your cluster setup is functioning correctly, you can use the provided test scripts: `test_cluster.py` and `test_cluster.sbatch`.
+
+### Purpose of the tests
+
+- `test_cluster.py` is a simple Python script designed to verify that your Python environment and necessary packages are correctly configured on the cluster.
+- `test_cluster.sbatch` is a SLURM batch script that submits `test_cluster.py` as a job, testing job submission, resource allocation, and execution on the cluster.
+
+### How to use the tests
+
+1. **Transfer the test scripts to the cluster:**
+
+```bash
+scp test_cluster.py test_cluster.sbatch your_username@izar.hpc.epfl.ch:~
+```
+
+2. **Submit the test job:**
+
+```bash
+sbatch test_cluster.sbatch
+```
+
+3. **Monitor the job status:**
+
+```bash
+squeue -u your_username
+```
+
+### What the tests verify
+
+- Proper loading of Python modules and virtual environments.
+- Correct execution of Python scripts on the cluster.
+- Successful job scheduling and resource allocation via SLURM.
+- Basic functionality of the cluster environment for your workflows.
+
+Running these tests before starting your actual computations helps ensure a smooth experience on the SCITAS cluster.
 
 ---
 

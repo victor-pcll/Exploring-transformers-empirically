@@ -114,6 +114,29 @@ python -m experiments.run_experiment
 
 ---
 
+## 🧪 Cluster Tests
+
+To verify that the cluster environment is correctly set up for running experiments, use the provided test scripts located in the `test/` directory.
+
+- `test_cluster.py`: A simple Python script to check environment variables, dependencies, and basic functionality on the cluster.
+- `test_cluster.sbatch`: A Slurm batch script to submit `test_cluster.py` as a job on the cluster scheduler.
+
+To run the test script directly on a cluster node, execute:
+
+```bash
+python test/test_cluster.py
+```
+
+To submit the test job to the cluster queue, use:
+
+```bash
+sbatch test/test_cluster.sbatch
+```
+
+These tests help ensure that the cluster environment is properly configured before launching large-scale experiments.
+
+---
+
 ## 🛠️ Development
 
 For editable installs during development, run:

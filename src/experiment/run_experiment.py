@@ -24,12 +24,14 @@ def run_experiment(config):
     for lam_cur in config["lam_list"]:
 
         acc_runs = []
-        rank_runs = []
+        rank_before_runs = []
+        rank_after_runs = []
 
         # Storage
         MSE_runs, label_err_runs, train_data_runs, train_reg_runs, total_loss_runs, W_runs = [], [], [], [], [], []
         attn_runs_samples = []
         seq_runs_samples = []
+        acc_train = []
 
         # Pour stocker les runs de test pour ce set d'hyperparams
         test_seq_list_samples = []
@@ -40,12 +42,15 @@ def run_experiment(config):
         for _ in range(config["samples"]):
 
             # Modification: récupère h_pred_sample et y_true_sample
-            student_trained, data_loss_i, reg_loss_i = train_student_on_data(config, lam_cur, train_dataset)
-            student_fine_tune, _, _ = fine_tune_student(config, lam_cur, valid_dataset)
+            student_trained, data_loss_i, reg_loss_i, acc = train_student_on_data(config, lam_cur, train_dataset)
+            rank_before = np.linalg.matrix_rank(student_trained.W0.weight.detach().cpu().numpy())
+            rank_before_runs.append(rank_before)
+            acc_train.append(acc)
+            student_fine_tune, _, _ = fine_tune_student(config, lam_cur, valid_dataset, student_trained)
             W_runs.append(student_fine_tune.W0.weight.detach().cpu().numpy())
 
-            rank = np.linalg.matrix_rank(student_fine_tune.W0.weight.detach().cpu().numpy())
-            rank_runs.append(rank)
+            rank_after = np.linalg.matrix_rank(student_fine_tune.W0.weight.detach().cpu().numpy())
+            rank_after_runs.append(rank_after)
 
             student_fine_tune.eval()
 
@@ -57,7 +62,7 @@ def run_experiment(config):
                 y_test_full = y_test_full.cpu().numpy()  
 
                 with torch.no_grad():
-                    _, y_student_test = student_fine_tune(X_test_full, delta_in=0.0)
+                    A_student_test, y_student_test = student_fine_tune(X_test_full, delta_in=0.0)
                     y_counts_student = y_student_test.detach().cpu().numpy()
 
                 # Erreur quadratique moyenne
@@ -75,7 +80,7 @@ def run_experiment(config):
 
             # Conversion en numpy pour stockage / pickle, suppression des dims inutiles
             seq_np = np.squeeze(X_test_full.cpu().numpy())
-            attn_student_np = np.squeeze(attn_test.cpu().numpy())
+            attn_student_np = np.squeeze(A_student_test.cpu().numpy())
 
             # Sauvegarde locale dans des listes pour analyse ultérieure
             test_seq_list_samples.append(seq_np)
@@ -83,7 +88,7 @@ def run_experiment(config):
 
             attn_runs_samples.append(attn_student_np)
             seq_runs_samples.append(seq_np)
-            acc = accuracy(np.argmax(y_counts_student, axis=1), np.argmax(y_test_full, axis=1))
+            acc = accuracy(y_counts_student, y_test_full)
             acc_runs.append(acc)
 
         attn_runs.append(np.mean(attn_runs_samples, axis=0))  # shape: (seq_len, seq_len)
@@ -102,8 +107,11 @@ def run_experiment(config):
             "train_total_mean": float(np.mean(total_loss_runs)/config["D"]**2),
             "acc_mean": float(np.mean(acc_runs)),
             "acc_std": float(np.std(acc_runs, ddof=1)) if len(acc_runs) > 1 else 0.0,
-            "rank_mean": float(np.mean(rank_runs)),
-            "rank_std": float(np.std(rank_runs, ddof=1)) if len(rank_runs) > 1 else 0.0,
+            "rank_before_mean": float(np.mean(rank_before_runs)),
+            "rank_before_std": float(np.std(rank_before_runs, ddof=1)) if len(rank_before_runs) > 1 else 0.0,
+            "rank_after_mean": float(np.mean(rank_after_runs)),
+            "rank_after_std": float(np.std(rank_after_runs, ddof=1)) if len(rank_after_runs) > 1 else 0.0,
+            "acc_train": acc_train,
             "W_runs": W_runs
         }
 

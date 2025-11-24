@@ -1,6 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
-import src.model.Net_MLP as Net
+from src.model.Net_MLP import Net
+from src.utils.accuracy import accuracy
 
 def train_student_on_data(config, lmbda, train_dataset):
     """
@@ -17,14 +18,14 @@ def train_student_on_data(config, lmbda, train_dataset):
         reg_loss_final: perte de régularisation finale
     """
     # --- Initialisation du réseau et de l'optimiseur ---
-    student = Net(config["D"], config["R"], config["L"], config["T"],
-                  norm=config["norm_init"], beta=config["beta"], device=config["device"])
+    student = Net(config["D"], config["R"], config["MLP_dim"], config["L"], config["T"], norm=config["norm_init"], beta=config["beta"], device=config["device"])
     optimizer = torch.optim.Adam(student.parameters(), lr=config["learning_rate"])
     
     # --- DataLoader avec mini-batch ---
     train_loader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
     
     loss_prev = None
+    acc_train = []
 
     # --- Boucle d'entraînement ---
     for t in range(config["max_iter"]):
@@ -39,7 +40,6 @@ def train_student_on_data(config, lmbda, train_dataset):
             # --- Calcul de la perte ---
             data_loss = torch.mean((y_student - y_batch) ** 2)
             
-            # Régularisation simple (exemple L2)
             reg_loss = 0.0
             if lmbda > 0:
                 reg_loss = lmbda * sum(torch.sum(p**2) for p in student.parameters())
@@ -49,10 +49,12 @@ def train_student_on_data(config, lmbda, train_dataset):
             optimizer.step()
             
             epoch_loss += total_loss.item() * X_batch.size(0)  # somme pondérée par batch size
+
+            acc_train.append(accuracy(y_student, y_batch))
         
         # --- Arrêt anticipé basé sur la convergence ---
         loss_cur = epoch_loss / len(train_dataset)
-        if loss_prev is not None and abs(loss_cur - loss_prev) < config["tol"] and t > 5:
+        if loss_prev is not None and abs(loss_cur - loss_prev) < config["tol"] and t > 1000:
             break
         loss_prev = loss_cur
 
@@ -66,4 +68,4 @@ def train_student_on_data(config, lmbda, train_dataset):
         data_loss_final = torch.mean((y_student_f - y_full) ** 2).item()
         reg_loss_final = lmbda * sum(torch.sum(p**2) for p in student.parameters()) if lmbda > 0 else 0.0
 
-    return student, data_loss_final, reg_loss_final
+    return student, data_loss_final, reg_loss_final, acc_train

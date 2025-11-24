@@ -22,7 +22,7 @@ module load python
 source $HOME/venv/bin/activate
 
 # Add src folder to Python path
-export PYTHONPATH=/home/peucelle/tpiv-simulations/src:$PYTHONPATH
+export PYTHONPATH=/home/peucelle/tpiv-simulations:$PYTHONPATH
 
 # Create a single directory for this run timestamp
 export RUN_DIR=/home/peucelle/tpiv-simulations/results/run_${RUN_TIMESTAMP}

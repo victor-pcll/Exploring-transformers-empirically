@@ -35,8 +35,9 @@ if __name__ == "__main__":
     config = {
         "D": 100,
         "L": 15,
+        "MLP_dim": 50,
         "alpha": alpha,
-        "rho": 2.0,
+        "rho": 1.0,
         "beta": 1.0,
         "lam_list": [0.0],
         "Delta_in": 0.5,
@@ -53,7 +54,7 @@ if __name__ == "__main__":
         "run_dir": run_dir,
         "run_index": run_index,
         "seed": 42,
-        "batch_size": 256,
+        "batch_size": 64,
     }
 
     config["R"] = int(config["rho"] * config["D"])

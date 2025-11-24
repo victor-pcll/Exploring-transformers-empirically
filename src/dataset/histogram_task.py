@@ -34,28 +34,29 @@ def generate_random_pos(T, L):
 
 def generate_histogram_task(T, L):
     """
-    À partir d'une liste d'entiers positifs (composition),
-    renvoie :
-        - seq : liste mélangée de lettres (taille T)
+    Génère une séquence d'entiers (taille T) à partir d'une composition aléatoire,
+    et un vecteur de comptage correspondant au nombre d'occurrences de chaque entier.
+
+    Renvoie :
+        - seq : liste mélangée d'entiers (taille T)
         - count_vector : liste (taille T) avec le nombre d'occurrences
-                         de la lettre présente à chaque position.
+                         de l'entier présent à chaque position
     """
-    alphabet = string.ascii_uppercase
     counts = generate_random_pos(T, L)
     
-    if len(counts) > len(alphabet):
-        raise ValueError("Alphabet insuffisant.")
+    if len(counts) > T:
+        raise ValueError("Nombre de valeurs uniques trop élevé par rapport à T")
     
     seq = []
-    letter_count_map = {} 
+    value_count_map = {}
     
     for i, k in enumerate(counts):
-        letter = alphabet[i]
-        letter_count_map[letter] = k
-        seq.extend([letter] * k)
+        value = i 
+        value_count_map[value] = k
+        seq.extend([value] * k)
     
     random.shuffle(seq)
-    count_vector = [letter_count_map[letter] for letter in seq]
+    count_vector = [value_count_map[val] for val in seq]
     
     return seq, count_vector
 
@@ -65,7 +66,13 @@ class HistogramDataset(torch.utils.data.Dataset):
         self.L = config["L"]
         self.n_samples = config["N_total"]
         rs = np.random.RandomState(config["seed"])
-        self.X, self.y = generate_histogram_task(self.T, self.L)
+        
+        self.X = []
+        self.y = []
+        for _ in range(self.n_samples):
+            x_sample, y_sample = generate_histogram_task(self.T, self.L)
+            self.X.append(x_sample)
+            self.y.append(y_sample)
 
     def __len__(self):
         return self.n_samples
