@@ -1,21 +1,18 @@
 import torch
 from torch.utils.data import DataLoader
 from src.model.Net_MLP import Net
-from src.utils.accuracy import accuracy
+from src.utils.metrics import accuracy
 
-def train_student_on_data(config, lmbda, train_dataset):
+def train_student_on_data(config, train_dataset):
     """
-    Training du student network en mini-batch.
-
+    Mini-batch training of the student network.
     Args:
-        config: dictionnaire contenant les hyperparamètres et dimensions
-        lmbda: coefficient de régularisation (si utilisé)
-        train_dataset: dataset PyTorch pour l'entraînement
-
+        config: dictionary containing hyperparameters and dimensions
+        train_dataset: PyTorch dataset for training
     Returns:
-        student: modèle entraîné
-        data_loss_final: perte de données finale sur tout le dataset
-        reg_loss_final: perte de régularisation finale
+        student: trained model
+        data_loss_final: final data loss across the entire dataset
+        reg_loss_final: final regularisation loss
     """
     # --- Initialisation du réseau et de l'optimiseur ---
     student = Net(config["D"], config["R"], config["MLP_dim"], config["L"], config["T"], norm=config["norm_init"], beta=config["beta"], device=config["device"])
@@ -45,9 +42,9 @@ def train_student_on_data(config, lmbda, train_dataset):
             data_loss = criterion(y_student, y_batch)
             
             reg_loss = 0.0
-            if lmbda > 0:
-                reg_loss = lmbda * sum(p.pow(2).sum() for p in student.parameters())
-            
+            if config["lambda"] > 0:
+                reg_loss = config["lambda"] * sum(p.pow(2).sum() for p in student.parameters())
+
             total_loss = data_loss + reg_loss
             total_loss.backward()
             optimizer.step()
@@ -64,15 +61,18 @@ def train_student_on_data(config, lmbda, train_dataset):
             break
         loss_prev = loss_cur
 
-    # --- Évaluation finale sur tout le dataset ---
+    # --- Évaluation finale sur tout le dataset (via DataLoader, compatible Subset) ---
     student.eval()
     full_loader = DataLoader(train_dataset, batch_size=len(train_dataset), shuffle=False)
+
     with torch.no_grad():
         X_full, y_full = next(iter(full_loader))
         X_full = X_full.long().to(config["device"])
-        y_full = y_full.to(config["device"])
+        y_full = y_full.float().to(config["device"])
+
         _, y_student_f = student(X_full, delta_in=0.0)
+
         data_loss_final = torch.mean((y_student_f - y_full) ** 2).item()
-        reg_loss_final = lmbda * sum(torch.sum(p**2) for p in student.parameters()) if lmbda > 0 else 0.0
+        reg_loss_final = config["lambda"] * sum(torch.sum(p**2) for p in student.parameters()) if config["lambda"] > 0 else 0.0
 
     return student, data_loss_final, reg_loss_final, acc_train

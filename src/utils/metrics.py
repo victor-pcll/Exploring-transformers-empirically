@@ -3,7 +3,12 @@ import torch
 
 def accuracy(pred, true):
     """
-    Compare chaque bin individuellement après arrondi.
+    Compute the accuracy for count predictions.
+    Args:
+        pred: predicted counts (numpy array or torch tensor)
+        true: true counts (numpy array or torch tensor)
+    Returns:
+        accuracy: proportion of predictions within 0.5 of the true count
     """
     if isinstance(pred, torch.Tensor):
         pred = pred.detach().cpu().numpy()

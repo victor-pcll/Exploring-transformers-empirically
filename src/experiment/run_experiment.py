@@ -7,159 +7,161 @@ from torch.utils.data import DataLoader
 from src.dataset.split_dataset import prepare_dataset
 from src.training.train_student_histogram import train_student_on_data
 from src.training.Fine_tune_histogram_task import fine_tune_student
-from src.utils.accuracy import accuracy
-from src.utils.clean_value import clean_value
+from src.utils.conversion import clean_value, clean_list, convert_to_numpy, clean_accuracy_list
+from src.utils.statistics import safe_mean, safe_std
+from src.utils.metrics import accuracy
+from src.utils.evaluation import evaluate_student
 
 def run_experiment(config):
+    """
+    Run experiments for different MLP dimensions and log results.
+    Args:
+        config: dictionary containing hyperparameters and settings
+    Returns:
+        df_results: DataFrame containing results for each MLP dimension
+    """
 
-    all_results = []                    # To store all results
-    attn_runs_all = []
-    y_runs_all = []
-    seq_runs_all = []
-    attn_runs = []                      # To store attention matrices
-    seq_runs = []                       # To store sample sequences associated with attention matrices    
+    device = config["device"]
+    D = config["D"]
+    alpha = config["alpha"]
+    rho = config["rho"]
+    run_dir = config["run_dir"]
+    run_index = config["run_index"]
+    logger = config["logger"]
 
-    # Pour stocker tous les h_pred_sample et y_true_sample pour tous les runs
-    student_pred_samples_all = []   # stores all student predictions across runs
-    teacher_true_samples_all = []   # stores all ground-truth teacher outputs across runs
+    os.makedirs(run_dir, exist_ok=True)
 
-    os.makedirs(config["run_dir"], exist_ok=True)
+    all_results = []
+    attn_matrices_all = []
+    sequences_all = []
+    y_predictions_all = []
 
-    for lam_cur in config["lam_list"]:
+    student_predictions_all_runs = []
+    teacher_true_outputs_all_runs = []
 
-        acc_runs = []
+    for mlp_dim in config["d_mlp_list"]:
+        config["MLP_dim"] = mlp_dim
+
+        acc_test_runs = []
         rank_before_runs = []
         rank_after_runs = []
 
-        # Storage
-        label_err_runs, train_data_runs, train_reg_runs, total_loss_runs, W_runs = [], [], [], [], []
-        attn_runs_samples = []
-        seq_runs_samples = []
-        acc_train = []
-        acc_last = []
+        label_err_runs = []
+        train_data_loss_runs = []
+        train_reg_loss_runs = []
+        total_loss_runs = []
+        weights_runs = []
 
-        # Pour stocker les runs de test pour ce set d'hyperparams
-        test_seq_list_samples = []
-        attn_student_list_samples = []
+        attn_samples_runs = []
+        seq_samples_runs = []
 
+        acc_train_runs = []
+        acc_train_last_runs = []
+
+        test_seq_samples = []
+        attn_student_samples = []
+
+        # Prepare datasets
         train_dataset, valid_dataset, test_dataset, _ = prepare_dataset(config)
 
         for _ in range(config["samples"]):
 
-            # --- Entraînement du student ---
-            student_trained, data_loss_i, reg_loss_i, acc = train_student_on_data(config, lam_cur, train_dataset)
-            rank_before = np.linalg.matrix_rank(student_trained.W0.weight.detach().cpu().numpy())
+            # --- Training the student ---
+            student_trained, data_loss, reg_loss, acc_train = train_student_on_data(config, train_dataset)
+            rank_before = np.linalg.matrix_rank(convert_to_numpy(student_trained.W0.weight))
             rank_before_runs.append(rank_before)
-            acc_train.append(acc)
-            last_acc = acc[-100:] if len(acc) >= 100 else acc   
-            acc_last.append(np.mean(last_acc) if len(last_acc) > 0 else 0.0)
+            acc_train_runs.append(acc_train)
+            last_acc_values = acc_train[-100:] if len(acc_train) >= 100 else acc_train
+            acc_train_last_runs.append(np.mean(last_acc_values) if len(last_acc_values) > 0 else 0.0)
 
-            # --- Fine-tuning du student ---
-            student_fine_tune, _, _ = fine_tune_student(config, lam_cur, valid_dataset, student_trained)
-            W_runs.append(student_fine_tune.W0.weight.detach().cpu().numpy())
-            rank_after = np.linalg.matrix_rank(student_fine_tune.W0.weight.detach().cpu().numpy())
+            # --- Fine-tuning the student ---
+            student_fine_tuned, _, _ = fine_tune_student(config, valid_dataset, student_trained)
+            weights_runs.append(convert_to_numpy(student_fine_tuned.W0.weight))
+            rank_after = np.linalg.matrix_rank(convert_to_numpy(student_fine_tuned.W0.weight))
             rank_after_runs.append(rank_after)
 
-            # --- Évaluation sur le test dataset ---
-            student_fine_tune.eval()
-            test_loader = DataLoader(test_dataset, batch_size=len(test_dataset))
+            # --- Evaluation on test dataset ---
+            y_pred, y_true, attn_matrix, seq_np = evaluate_student(student_fine_tuned, test_dataset, device)
 
-            for X_test_full, y_test_full in test_loader:
-                X_test_full = X_test_full.long().to(config["device"])
-                y_test_full = y_test_full.cpu().numpy()  
+            label_err = np.mean((y_pred - y_true) ** 2)
 
-                with torch.no_grad():
-                    A_student_test, y_student_test = student_fine_tune(X_test_full, delta_in=0.0)
-                    y_counts_student = y_student_test.detach().cpu().numpy()
+            student_predictions_all_runs.append(y_pred)
+            teacher_true_outputs_all_runs.append(y_true)
 
-                label_err_i = np.mean((y_counts_student - y_test_full) ** 2)
+            label_err_runs.append(label_err)
+            train_data_loss_runs.append(data_loss)
+            train_reg_loss_runs.append(reg_loss)
+            total_loss_runs.append(data_loss + reg_loss)
 
-                student_pred_samples_all.append(y_counts_student)
-                teacher_true_samples_all.append(y_test_full)
+            attn_matrices_all.append(attn_matrix)
+            y_predictions_all.append(y_pred.reshape(-1))
+            sequences_all.append(seq_np)
 
-            # --- Enregistrement des résultats ---
-            label_err_runs.append(label_err_i)
-            train_data_runs.append(data_loss_i)
-            train_reg_runs.append(reg_loss_i)
-            total_loss_runs.append(data_loss_i + reg_loss_i)
+            test_seq_samples.append(seq_np)
+            attn_student_samples.append(attn_matrix)
 
-            # Conversion en numpy pour stockage / pickle, suppression des dims inutiles
-            seq_np = np.squeeze(X_test_full.cpu().numpy())
-            attn_student_np = np.squeeze(A_student_test.cpu().numpy())
-            y_counts_student_np = np.squeeze(y_counts_student)
+            attn_samples_runs.append(attn_matrix)
+            seq_samples_runs.append(seq_np)
 
-            attn_runs_all.append(attn_student_np)
-            y_runs_all.append(y_counts_student_np)
-            seq_runs_all.append(seq_np)
-
-            # Sauvegarde locale dans des listes pour analyse ultérieure
-            test_seq_list_samples.append(seq_np)
-            attn_student_list_samples.append(attn_student_np)
-
-            attn_runs_samples.append(attn_student_np)
-            seq_runs_samples.append(seq_np)
-            acc_runs.append(accuracy(y_counts_student, y_test_full))
+            acc_test_runs.append(accuracy(y_pred, y_true))
 
         # Clean values before computing means
-        train_data_runs = [clean_value(x) for x in train_data_runs]
-        train_reg_runs = [clean_value(x) for x in train_reg_runs]
-        total_loss_runs = [clean_value(x) for x in total_loss_runs]
-        label_err_runs = [clean_value(x) for x in label_err_runs]
+        train_data_loss_runs = clean_list(train_data_loss_runs)
+        train_reg_loss_runs = clean_list(train_reg_loss_runs)
+        total_loss_runs = clean_list(total_loss_runs)
+        label_err_runs = clean_list(label_err_runs)
 
-        attn_runs.append(np.mean(attn_runs_samples, axis=0))  # shape: (seq_len, seq_len)
-        seq_runs.append(seq_runs_samples[0])  # shape: (seq_len,)
+        attn_matrices_mean = np.mean(attn_samples_runs, axis=0)
+        attn_matrices_all.append(attn_matrices_mean)
+        sequences_all.append(seq_samples_runs[0])
 
-        acc_train_clean = []
-        for sub in acc_train:
-            if isinstance(sub, (list, np.ndarray)):
-                acc_train_clean.append([float(x) for x in sub])
-            else:
-                acc_train_clean.append([float(sub)])
+        acc_train_clean = clean_accuracy_list(acc_train_runs)
 
         results = {
-            "alpha": config["alpha"],
-            "lam": lam_cur,
-            "rho": config["rho"],
-            "label_err_mean": float(np.mean(label_err_runs)/config["D"]**2 if len(label_err_runs) > 0 else 0.0),
-            "label_err_std": float(np.std(label_err_runs, ddof=1)/config["D"]**2 if len(label_err_runs) > 1 else 0.0),
-            "train_data_mean": float(np.mean(train_data_runs)/config["D"]**2 if len(train_data_runs) > 0 else 0.0),
-            "train_reg_mean": float(np.mean(train_reg_runs) / config["D"]**2 if len(train_reg_runs) > 0 else 0.0),
-            "train_total_mean": float(np.mean(total_loss_runs)/config["D"]**2 if len(total_loss_runs) > 0 else 0.0),
-            "acc_test_mean": float(np.mean(acc_runs) if len(acc_runs) > 0 else 0.0),
-            "acc_test_std": float(np.std(acc_runs, ddof=1) if len(acc_runs) > 1 else 0.0),
-            "acc_train_last": float(np.mean(acc_last) if len(acc_last) > 0 else 0.0),
-            "rank_before_mean": float(np.mean(rank_before_runs) if len(rank_before_runs) > 0 else 0.0),
-            "rank_before_std": float(np.std(rank_before_runs, ddof=1) if len(rank_before_runs) > 1 else 0.0),
-            "rank_after_mean": float(np.mean(rank_after_runs) if len(rank_after_runs) > 0 else 0.0),
-            "rank_after_std": float(np.std(rank_after_runs, ddof=1) if len(rank_after_runs) > 1 else 0.0),
+            "alpha": alpha,
+            "MLP_dim": mlp_dim,
+            "rho": rho,
+            "label_err_mean": safe_mean(label_err_runs, divisor=D**2),
+            "label_err_std": safe_std(label_err_runs, divisor=D**2),
+            "train_data_mean": safe_mean(train_data_loss_runs, divisor=D**2),
+            "train_reg_mean": safe_mean(train_reg_loss_runs, divisor=D**2),
+            "train_total_mean": safe_mean(total_loss_runs, divisor=D**2),
+            "acc_test_mean": safe_mean(acc_test_runs),
+            "acc_test_std": safe_std(acc_test_runs),
+            "acc_train_mean": safe_mean(acc_train_last_runs),
+            "acc_train_std": safe_std(acc_train_last_runs),
+            "rank_before_mean": safe_mean(rank_before_runs),
+            "rank_before_std": safe_std(rank_before_runs),
+            "rank_after_mean": safe_mean(rank_after_runs),
+            "rank_after_std": safe_std(rank_after_runs),
         }
 
         all_results.append(results)
-        config["logger"].info(f"🔹 [alpha={config['alpha']:.4f}, lambda={lam_cur:.4f}] → label_err={results['label_err_mean']:.6f}")
+        logger.info(f"🔹 [alpha={alpha:.4f}, MLP_dim={mlp_dim}] → label_err={results['label_err_mean']:.6f}")
 
-    # --- 1. Save CSV with only scalar metrics ---
+    # --- Save CSV with scalar metrics ---
     df_results = pd.DataFrame(all_results)
-    logs_csv_path = os.path.join(config['run_dir'], f"logs_{config['run_index']}.csv")
+    logs_csv_path = os.path.join(run_dir, f"logs_{run_index}.csv")
     df_results.to_csv(logs_csv_path, index=False)
 
-    # --- 2. Save heavy objects (weights, attention matrices, sequences, accuracy) ---
-    heavy_pickle_path = os.path.join(config['run_dir'], f"heavy_data_{config['run_index']}.pkl")
+    # --- Save heavy objects (weights, attention matrices, sequences, accuracy) ---
+    heavy_pickle_path = os.path.join(run_dir, f"heavy_data_{run_index}.pkl")
     with open(heavy_pickle_path, "wb") as f:
         pickle.dump({
-            "W_runs": W_runs,
-            "attn_matrices": attn_runs_all,
-            "seq_samples": seq_runs_all,
-            "y_samples": y_runs_all,
+            "W_runs": weights_runs,
+            # "attn_matrices": attn_matrices_all,
+            # "seq_samples": sequences_all,
+            # "y_samples": y_predictions_all,
             "acc_train": acc_train_clean
         }, f)
 
-    # --- 3. Save predictions separately ---
-    preds_pickle_path = os.path.join(config['run_dir'], f"preds_{config['run_index']}.pkl")
+    # --- Save predictions separately ---
+    preds_pickle_path = os.path.join(run_dir, f"preds_{run_index}.pkl")
     with open(preds_pickle_path, "wb") as f:
         pickle.dump({
-            "student_pred_samples": student_pred_samples_all,
-            "teacher_true_samples": teacher_true_samples_all
+            "student_pred_samples": student_predictions_all_runs,
+            "teacher_true_samples": teacher_true_outputs_all_runs
         }, f)
 
-    config["logger"].info(f"💾 Results saved for run_index={config['run_index']}")
+    logger.info(f"💾 Results saved for run_index={run_index}")
     return df_results

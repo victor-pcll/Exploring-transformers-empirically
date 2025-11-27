@@ -2,9 +2,17 @@ import torch
 from torch.utils.data import DataLoader
 import src.model.Net_MLP as Net
 
-def fine_tune_student(config, lmbda, train_dataset, student_trained):
+def fine_tune_student(config, train_dataset, student_trained):
     """
-    Fine-tune uniquement la matrice W0 du student network en mini-batch.
+    Fine-tune only the W0 matrix of the student network in mini-batches.
+    Args:
+        config: dictionary containing hyperparameters and dimensions
+        train_dataset: PyTorch dataset for training
+        student_trained: pre-trained student model to be fine-tuned
+    Returns:
+        student_trained: fine-tuned student model
+        data_loss_final: final data loss across the entire dataset
+        reg_loss_final: final regularisation loss
     """
     # --- Bloc W0 uniquement trainable ---
     for p in student_trained.parameters():
@@ -30,7 +38,7 @@ def fine_tune_student(config, lmbda, train_dataset, student_trained):
             
             data_loss = criterion(y_student, y_batch)
             
-            reg_loss = lmbda * torch.sum(student_trained.W0.weight**2) if lmbda > 0 else 0.0
+            reg_loss = config["lambda"] * torch.sum(student_trained.W0.weight**2) if config["lambda"] > 0 else 0.0
             
             total_loss = data_loss + reg_loss
             total_loss.backward()
@@ -44,15 +52,18 @@ def fine_tune_student(config, lmbda, train_dataset, student_trained):
             break
         loss_prev = loss_cur
 
-    # --- Évaluation finale sur tout le dataset ---
+    # --- Évaluation finale sur tout le dataset (via DataLoader, compatible Subset) ---
     student_trained.eval()
     full_loader = DataLoader(train_dataset, batch_size=len(train_dataset), shuffle=False)
+
     with torch.no_grad():
         X_full, y_full = next(iter(full_loader))
         X_full = X_full.long().to(config["device"])
-        y_full = y_full.to(config["device"])
+        y_full = y_full.float().to(config["device"])
+
         _, y_student_f = student_trained(X_full, delta_in=0.0)
+
         data_loss_final = torch.mean((y_student_f - y_full) ** 2).item()
-        reg_loss_final = lmbda * torch.sum(student_trained.W0.weight**2).item() if lmbda > 0 else 0.0
+        reg_loss_final = config["lambda"] * torch.sum(student_trained.W0.weight**2).item() if config["lambda"] > 0 else 0.0
 
     return student_trained, data_loss_final, reg_loss_final
