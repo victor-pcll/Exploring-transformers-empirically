@@ -25,8 +25,8 @@ if __name__ == "__main__":
     logger.info(f"🖥 Device: {device} | Run index: {run_index} | Job ID: {job_id}")
 
     # Alpha list
-    alpha_start = 0.1
-    alpha_end = 0.8
+    alpha_start = 0.05
+    alpha_end = 0.5
     alpha_steps = 15
     alpha_list = np.linspace(alpha_start, alpha_end, alpha_steps).tolist()
     alpha = alpha_list[run_index] if run_index < len(alpha_list) else alpha_list[-1]
@@ -37,7 +37,7 @@ if __name__ == "__main__":
         "L": 15,
         "T" : 30,
         # "MLP_dim": 50,
-        "d_mlp_list": [10, 30, 50], # faire un test avec une unique dimension MLP
+        "d_mlp_list": [10], # faire un test avec une unique dimension MLP
         "alpha": alpha,
         "rho": 1.0,
         "beta": 1.0,
@@ -48,7 +48,7 @@ if __name__ == "__main__":
         "learning_rate": 0.01,
         "learning_rate_fine_tune": 0.001,
         "norm_init": 1.0,
-        "tol": 1e-6,
+        "tol": 1e-5,
         "N_test": 2000,
         "N_valid": 2000,
         "device": device,

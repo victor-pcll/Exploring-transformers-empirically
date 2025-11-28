@@ -1,6 +1,7 @@
 import torch
 from torch.utils.data import DataLoader
 import src.model.Net_MLP as Net
+from src.utils.metrics import accuracy
 
 def fine_tune_student(config, train_dataset, student_trained):
     """
@@ -26,9 +27,12 @@ def fine_tune_student(config, train_dataset, student_trained):
     
     loss_prev = None
 
+    acc_fine_tune = []
+
     for t in range(config["max_fine_tune_iter"]):
         student_trained.train()
         epoch_loss = 0.0
+        acc_epoch = []
         for X_batch, y_batch in train_loader:
             X_batch = X_batch.long().to(config["device"])
             y_batch = y_batch.float().to(config["device"])
@@ -45,9 +49,13 @@ def fine_tune_student(config, train_dataset, student_trained):
             optimizer.step()
             
             epoch_loss += total_loss.item() * X_batch.size(0)
-        
+
+            with torch.no_grad():
+                acc_epoch.append(accuracy(y_student, y_batch))
+
         # --- Early stopping basé sur la convergence ---
         loss_cur = epoch_loss / len(train_dataset)
+        acc_fine_tune.append(sum(acc_epoch) / len(acc_epoch))
         if loss_prev is not None and abs(loss_cur - loss_prev) < config["tol"] and t > 5:
             break
         loss_prev = loss_cur
@@ -66,4 +74,4 @@ def fine_tune_student(config, train_dataset, student_trained):
         data_loss_final = torch.mean((y_student_f - y_full) ** 2).item()
         reg_loss_final = config["lambda"] * torch.sum(student_trained.W0.weight**2).item() if config["lambda"] > 0 else 0.0
 
-    return student_trained, data_loss_final, reg_loss_final
+    return student_trained, data_loss_final, reg_loss_final, acc_fine_tune

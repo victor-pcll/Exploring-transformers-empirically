@@ -56,6 +56,7 @@ def run_experiment(config):
         seq_samples_runs = []
 
         acc_train_runs = []
+        acc_fine_tune_runs = []
         acc_train_last_runs = []
 
         test_seq_samples = []
@@ -75,10 +76,12 @@ def run_experiment(config):
             acc_train_last_runs.append(np.mean(last_acc_values) if len(last_acc_values) > 0 else 0.0)
 
             # --- Fine-tuning the student ---
-            student_fine_tuned, _, _ = fine_tune_student(config, valid_dataset, student_trained)
+            student_fine_tuned, _, _, acc_fine_tune = fine_tune_student(config, valid_dataset, student_trained)
             weights_runs.append(convert_to_numpy(student_fine_tuned.W0.weight))
             rank_after = np.linalg.matrix_rank(convert_to_numpy(student_fine_tuned.W0.weight))
             rank_after_runs.append(rank_after)
+            last_acc_values = acc_fine_tune[-100:] if len(acc_fine_tune) >= 100 else acc_fine_tune
+            acc_fine_tune_runs.append(np.mean(last_acc_values) if len(last_acc_values) > 0 else 0.0)
 
             # --- Evaluation on test dataset ---
             y_pred, y_true, attn_matrix, seq_np = evaluate_student(student_fine_tuned, test_dataset, device)
@@ -126,8 +129,11 @@ def run_experiment(config):
             "train_data_mean": safe_mean(train_data_loss_runs, divisor=D**2),
             "train_reg_mean": safe_mean(train_reg_loss_runs, divisor=D**2),
             "train_total_mean": safe_mean(total_loss_runs, divisor=D**2),
+            "train_total_std": safe_std(total_loss_runs, divisor=D**2),
             "acc_test_mean": safe_mean(acc_test_runs),
             "acc_test_std": safe_std(acc_test_runs),
+            "acc_fine_tune_mean": safe_mean(acc_fine_tune_runs),
+            "acc_fine_tune_std": safe_std(acc_fine_tune_runs),
             "acc_train_mean": safe_mean(acc_train_last_runs),
             "acc_train_std": safe_std(acc_train_last_runs),
             "rank_before_mean": safe_mean(rank_before_runs),

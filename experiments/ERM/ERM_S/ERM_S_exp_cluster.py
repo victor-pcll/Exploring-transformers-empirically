@@ -49,13 +49,13 @@ class Net(nn.Module):
         """
         self.R = R
         W = torch.randn(self.D, self.R, device=self.S.weight.device)
-        S_psd = (W @ W.T) / np.sqrt(self.R * self.D) # Compute PSD matrix
-        self.S.weight.data = S_psd.clone() # Copy into model weights
+        S_psd = (W @ W.T) / np.sqrt(self.R * self.D) # Shape: (D, D)
+        self.S.weight.data = S_psd.clone() # Copier les données dans le poids de S
 
 
     def forward(self, x, delta_in):
-        x = self.S(x) / self.D
-        attention_matrix = torch.einsum('nap,nbp->nab', x, x)
+        x_S = self.S(x)
+        attention_matrix = torch.einsum('nap,nbp->nab', x, x_S)
         x = attention_matrix
         if delta_in > 0.0:
             M = torch.full((self.L, self.L), 1.0 / np.sqrt(2), device=x.device, dtype=x.dtype)
@@ -243,13 +243,13 @@ if __name__ == "__main__":
     # Charger la configuration
     config = {
         "verbose": False,
-        "alpha_start": 0.0005,
-        "alpha_end": 0.05,
+        "alpha_start": 0.005,
+        "alpha_end": 0.2,
         "alpha_steps": 15,
         "d": 100,
         "L": 2,
         "beta": 1.0,
-        "lmbda": [0.1, 0.01, 0.001, 0.0001, 0.00005, 0.00001],
+        "lmbda": [0.1, 0.01, 0.001, 0.0001, 0.00001],
         "Delta_in": 0.5,
         "Delta_list": [0.0],
         "samples": 12,
