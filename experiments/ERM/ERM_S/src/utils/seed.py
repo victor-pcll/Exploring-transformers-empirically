@@ -1,4 +1,5 @@
 import torch
+import numpy as np
 
 def init_torch(seed=42, verbose=True):
     torch.manual_seed(seed)

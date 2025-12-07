@@ -7,24 +7,21 @@ class Net(torch.nn.Module):
         self.beta = beta
         self.D = input_dim
         self.L = number_tokens
-        self.S = torch.nn.Linear(input_dim, input_dim, bias=False)
-        self.S.weight.data.uniform_(0.0, norm)      
+        self.S = torch.nn.Parameter(torch.empty(self.D, self.D))
+        torch.nn.init.uniform_(self.S, -norm, norm)
 
     def init_teacher(self, R):
-        """
-        Initialize S as a PSD matrix: S = W W^T / sqrt(r * D)
-        where W is a random Gaussian matrix.
-        """
         self.R = R
-        W = torch.randn(self.D, self.R, device=self.S.weight.device)
-        S_psd = (W @ W.T) / np.sqrt(self.R * self.D)
-        self.S.weight.data = S_psd.clone() 
+        W = torch.randn(self.D, self.R, device=self.S.device)
+        S_psd = (W @ W.T) / np.sqrt(self.D * self.R)
+        device = self.S.device
+        self.S.data = S_psd.clone()
 
 
     def forward(self, x, delta_in):
-        x_S = self.S(x)
-        attention_matrix = torch.einsum('nap,nbp->nab', x, x_S)
-        x = attention_matrix
+        x = torch.einsum("nap,pq,nbq->nab", x, self.S, x) / (self.D ** 1.5)
+        trace_part = torch.norm(self.S)**2 / (self.D ** 1.5)
+        x = x # - trace_part * torch.eye(self.L, device=x.device)
         if delta_in > 0.0:
             M = torch.full((self.L, self.L), 1.0 / np.sqrt(2), device=x.device, dtype=x.dtype)
             M.diagonal().fill_(1)

@@ -22,11 +22,11 @@ module load python
 source $HOME/venv/bin/activate
 
 # Add src folder to Python path
-export PYTHONPATH=/home/peucelle/tpiv-simulations/src:$PYTHONPATH
+export PYTHONPATH=/home/peucelle/tpiv-simulations/experiments/BO:$PYTHONPATH
 
 # Create a single directory for this run timestamp
 export RUN_DIR=/home/peucelle/tpiv-simulations/results/run_${RUN_TIMESTAMP}
 mkdir -p $RUN_DIR
 
 # Pass both the task ID and run directory to the Python script
-$HOME/venv/bin/python /home/peucelle/tpiv-simulations/experiments/BO/BO_exp_cluster.py $SLURM_ARRAY_TASK_ID $RUN_DIR >> ${RUN_DIR}/log.txt 2>> ${RUN_DIR}/err.txt
+$HOME/venv/bin/python /home/peucelle/tpiv-simulations/experiments/BO/main.py $SLURM_ARRAY_TASK_ID $RUN_DIR >> ${RUN_DIR}/log.txt 2>> ${RUN_DIR}/err.txt

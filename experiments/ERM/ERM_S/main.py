@@ -24,13 +24,13 @@ if __name__ == "__main__":
     # ----- CONFIG (tu la gardes entièrement ici) -----
     config = {
         "verbose": False,
-        "alpha_start": 0.1,
-        "alpha_end": 1.0,
+        "alpha_start": 0.01,
+        "alpha_end": 2.0,
         "alpha_steps": 15,
         "d": 100,
         "L": 2,
         "beta": 1.0,
-        "lmbda": [0.1, 0.01, 0.001, 0.0001, 0.00001],
+        "lmbda": [0.1, 0.001, 2*0.0001, 5*0.0001, 0.0001],
         "Delta_in": 0.5,
         "Delta_list": [0.0],
         "samples": 16,
@@ -39,8 +39,7 @@ if __name__ == "__main__":
         "norm_init": 1.0,
         "tol": 1e-6,
         "n_test": 2000,
-        "rho": 0.75,        # rho student
-        "rho_star": 0.5     # rho teacher
+        "rho_star": 0.5,     # rho teacher
     }
 
     # Seed & numeric conversion
@@ -57,7 +56,6 @@ if __name__ == "__main__":
         base_dir=run_dir,
         D=config["d"],
         L=config["L"],
-        rho=config["rho"],
         rho_star=config["rho_star"],
         beta=config["beta"],
         lam_list=config["lmbda"],

@@ -11,6 +11,7 @@ def evaluate_student(student_model, dataset, device):
     Returns:
         y_pred: predicted outputs as a numpy array
         y_true: true outputs as a numpy array
+        attn_matrix: attention matrix from the student model as a numpy array
         X: input sequences as a numpy array
     """
     from torch.utils.data import DataLoader
@@ -26,4 +27,7 @@ def evaluate_student(student_model, dataset, device):
         y_student = student_model(X)
         y_pred = y_student.detach().cpu().numpy()
 
-    return y_pred, y_true, X.cpu().numpy().reshape(-1)
+        # If your model has no attention, just return None
+        attn_matrix = None
+
+    return y_pred, y_true, attn_matrix, X.cpu().numpy().reshape(-1)

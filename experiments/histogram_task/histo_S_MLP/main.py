@@ -25,9 +25,9 @@ if __name__ == "__main__":
     logger.info(f"🖥 Device: {device} | Run index: {run_index} | Job ID: {job_id}")
 
     # Alpha list
-    alpha_start = 10.0
-    alpha_end = 15.0
-    alpha_steps = 2
+    alpha_start = 0.0
+    alpha_end = 30.0
+    alpha_steps = 15
     alpha_list = np.linspace(alpha_start, alpha_end, alpha_steps).tolist()
     alpha = alpha_list[run_index] if run_index < len(alpha_list) else alpha_list[-1]
 
@@ -36,8 +36,8 @@ if __name__ == "__main__":
         "D": 100,
         "L": 15,
         "T" : 30,
-        "d_mlp_list":[30],
-        "alpha": 15,
+        "d_mlp_list": [30],
+        "alpha": alpha,
         "rho": 1.0,
         "beta": 1.0,
         "lambda": 0.0001,

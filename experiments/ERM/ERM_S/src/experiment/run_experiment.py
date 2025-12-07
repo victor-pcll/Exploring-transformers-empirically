@@ -5,7 +5,7 @@ import pandas as pd
 import torch
 from src.models.Net_S import Net
 from src.training.train_student import train_student_on_data
-from src.metrics.S_MSE import S_MSE
+from src.utils.S_MSE import S_MSE
 
 def run_experiment(alpha_idx=0, D=100, L=2, rho=1.00, rho_star=0.5, beta=1.0,
                    lam_list=[0.1, 0.01, 0.001, 0.0001, 0.00001], Delta_list=[0.0], Delta_in=0.5,
@@ -31,7 +31,7 @@ def run_experiment(alpha_idx=0, D=100, L=2, rho=1.00, rho_star=0.5, beta=1.0,
                 with torch.no_grad():
                     teacher = Net(D, L, norm=1.0, beta=beta_star)
                     teacher.init_teacher(R_star)
-                S_teacher = teacher.S.weight.detach().cpu().numpy()
+                S_teacher = teacher.S.detach().cpu().numpy()
 
                 MSE_runs, label_err_runs, label_err_runs_noise = [], [], []
                 train_data_runs, train_reg_runs, total_loss_runs = [], [], []
@@ -59,7 +59,7 @@ def run_experiment(alpha_idx=0, D=100, L=2, rho=1.00, rho_star=0.5, beta=1.0,
 
                     student_eval = Net(D, L, norm=0.0, beta=beta)
                     with torch.no_grad():
-                        student_eval.S.weight.copy_(torch.tensor(S_last))
+                        student_eval.S.data.copy_(torch.tensor(S_last))
                         y_test_student = student_eval(x_test, delta_in=0.0)
                         label_err_i = torch.sum((y_test_student - y_test_teacher) ** 2).item()
                         label_err_i_noise = torch.sum((y_test_student - y_test_teacher_noise) ** 2).item()

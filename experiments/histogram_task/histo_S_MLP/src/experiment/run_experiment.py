@@ -61,7 +61,7 @@ def run_experiment(config):
 
             # --- Training the student ---
             student_trained, data_loss, reg_loss, acc_train = train_student_on_data(config, train_dataset)
-            rank_before = np.linalg.matrix_rank(convert_to_numpy(student_trained.W0.weight))
+            rank_before = np.linalg.matrix_rank(convert_to_numpy(student_trained.S))
             rank_before_runs.append(rank_before)
             acc_train_runs.append(acc_train)
             last_acc_values = acc_train[-100:] if len(acc_train) >= 100 else acc_train
@@ -69,14 +69,14 @@ def run_experiment(config):
 
             # --- Fine-tuning the student ---
             student_fine_tuned, _, _, acc_fine_tune = fine_tune_student(config, valid_dataset, student_trained)
-            weights_runs.append(convert_to_numpy(student_fine_tuned.W0.weight))
-            rank_after = np.linalg.matrix_rank(convert_to_numpy(student_fine_tuned.W0.weight))
+            weights_runs.append(convert_to_numpy(student_fine_tuned.S))
+            rank_after = np.linalg.matrix_rank(convert_to_numpy(student_fine_tuned.S))
             rank_after_runs.append(rank_after)
             last_acc_values = acc_fine_tune[-100:] if len(acc_fine_tune) >= 100 else acc_fine_tune
             acc_fine_tune_runs.append(np.mean(last_acc_values) if len(last_acc_values) > 0 else 0.0)
 
             # --- Evaluation on test dataset ---
-            y_pred_logits, y_true, X_test = evaluate_student(student_fine_tuned, test_dataset, device)
+            y_pred_logits, y_true, _, X_test = evaluate_student(student_fine_tuned, test_dataset, device)
 
             # Convert logits to integer labels by argmax over classes (last dimension)
             y_pred = np.argmax(y_pred_logits, axis=-1)
@@ -86,7 +86,7 @@ def run_experiment(config):
 
             student_predictions_all_runs.append(y_pred)
             teacher_true_outputs_all_runs.append(y_true)
-            test_sequences_all_runs.append(X_test)
+            test_sequences_all_runs.append(X_test) 
 
             label_err_runs.append(label_err)
             train_data_loss_runs.append(data_loss)
@@ -148,7 +148,7 @@ def run_experiment(config):
         pickle.dump({
             "student_pred_samples": student_predictions_all_runs,
             "teacher_true_samples": teacher_true_outputs_all_runs,
-            "sequence_samples": test_sequences_all_runs 
+            "sequence_samples": test_sequences_all_runs
         }, f)
 
     logger.info(f"💾 Results saved for run_index={run_index}")
