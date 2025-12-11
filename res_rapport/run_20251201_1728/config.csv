@@ -1,0 +1,16 @@
+alpha,D,L,rho,rho_star,beta,lam,Delta_in,samples,T,learning_rate,norm_init,tol,N_test,base_dir
+0.01,100,2,1.0,0.5,1.0,0.0001,0.5,16,10000,0.1,1.0,1e-06,2000,/home/peucelle/tpiv-simulations/results/run_20251201_1728
+0.15214285714285716,100,2,1.0,0.5,1.0,0.0001,0.5,16,10000,0.1,1.0,1e-06,2000,/home/peucelle/tpiv-simulations/results/run_20251201_1728
+0.2942857142857143,100,2,1.0,0.5,1.0,0.0001,0.5,16,10000,0.1,1.0,1e-06,2000,/home/peucelle/tpiv-simulations/results/run_20251201_1728
+0.4364285714285715,100,2,1.0,0.5,1.0,0.0001,0.5,16,10000,0.1,1.0,1e-06,2000,/home/peucelle/tpiv-simulations/results/run_20251201_1728
+0.5785714285714286,100,2,1.0,0.5,1.0,0.0001,0.5,16,10000,0.1,1.0,1e-06,2000,/home/peucelle/tpiv-simulations/results/run_20251201_1728
+0.7207142857142858,100,2,1.0,0.5,1.0,0.0001,0.5,16,10000,0.1,1.0,1e-06,2000,/home/peucelle/tpiv-simulations/results/run_20251201_1728
+0.862857142857143,100,2,1.0,0.5,1.0,0.0001,0.5,16,10000,0.1,1.0,1e-06,2000,/home/peucelle/tpiv-simulations/results/run_20251201_1728
+1.0050000000000001,100,2,1.0,0.5,1.0,0.0001,0.5,16,10000,0.1,1.0,1e-06,2000,/home/peucelle/tpiv-simulations/results/run_20251201_1728
+1.1471428571428572,100,2,1.0,0.5,1.0,0.0001,0.5,16,10000,0.1,1.0,1e-06,2000,/home/peucelle/tpiv-simulations/results/run_20251201_1728
+1.2892857142857144,100,2,1.0,0.5,1.0,0.0001,0.5,16,10000,0.1,1.0,1e-06,2000,/home/peucelle/tpiv-simulations/results/run_20251201_1728
+1.4314285714285715,100,2,1.0,0.5,1.0,0.0001,0.5,16,10000,0.1,1.0,1e-06,2000,/home/peucelle/tpiv-simulations/results/run_20251201_1728
+1.5735714285714286,100,2,1.0,0.5,1.0,0.0001,0.5,16,10000,0.1,1.0,1e-06,2000,/home/peucelle/tpiv-simulations/results/run_20251201_1728
+1.715714285714286,100,2,1.0,0.5,1.0,0.0001,0.5,16,10000,0.1,1.0,1e-06,2000,/home/peucelle/tpiv-simulations/results/run_20251201_1728
+1.857857142857143,100,2,1.0,0.5,1.0,0.0001,0.5,16,10000,0.1,1.0,1e-06,2000,/home/peucelle/tpiv-simulations/results/run_20251201_1728
+2.0,100,2,1.0,0.5,1.0,0.0001,0.5,16,10000,0.1,1.0,1e-06,2000,/home/peucelle/tpiv-simulations/results/run_20251201_1728

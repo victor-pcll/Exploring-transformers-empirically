@@ -178,7 +178,7 @@ def run_experiment(alpha_idx=0, D=100, L=2, rho=1.00, rho_star=0.5, beta=1.0,
                     "label_err_mean": float(np.mean(label_err_runs)/D**2),
                     "label_err_std": float(np.std(label_err_runs, ddof=1)/D**2) if len(label_err_runs) > 1 else 0.0,
                     "label_err_mean_noise": float(np.mean(label_err_runs_noise)/D**2),
-                    "label_err_std_noise": float(np.std(label_err_runs_noise, ddof=1)/D**4) if len(label_err_runs_noise) > 1 else 0.0,
+                    "label_err_std_noise": float(np.std(label_err_runs_noise, ddof=1)/D**2) if len(label_err_runs_noise) > 1 else 0.0,
                     "train_data_mean": float(np.mean(train_data_runs)/D**2),
                     "train_reg_mean": float(np.mean(train_reg_runs)/D**2),
                     "train_total_mean": float(np.mean(total_loss_runs)/D**2),
@@ -260,7 +260,7 @@ if __name__ == "__main__":
     # Charger la configuration
     config = {
         "verbose": False,
-        "alpha_start": 0.005,
+        "alpha_start": 0.1,
         "alpha_end": 1.0,
         "alpha_steps": 15,
         "d": 100,
@@ -275,7 +275,7 @@ if __name__ == "__main__":
         "norm_init": 1.0,
         "tol": 1e-6,
         "n_test": 2000,
-        "rho": 0.75,
+        "rho": 1.0,
         "rho_star": 0.5  
     }
 

@@ -1,0 +1,210 @@
+[Config] Converted config: {'verbose': False, 'alpha_start': 0.01, 'alpha_end': 2.0, 'alpha_steps': 15, 'd': 100, 'L': 2, 'beta': 1.0, 'lmbda': [0.1, 0.001, 0.0002, 0.0005, 0.0001], 'Delta_in': 0.5, 'Delta_list': [0.0], 'samples': 16, 'T': 10000, 'lr': 0.1, 'norm_init': 1.0, 'tol': 1e-06, 'n_test': 2000, 'rho_star': 0.5}
+========================================
+        EXPERIMENT START
+----------------------------------------
+Run index: 0
+Job ID: 2738995
+Device: cuda
+Results directory: /home/peucelle/tpiv-simulations/results/run_20251201_1728
+========================================
+----------------------------------------
+Experiment finished.
+Results saved in /home/peucelle/tpiv-simulations/results/run_20251201_1728
+Logs CSV: logs_0.csv
+----------------------------------------
+[Config] Converted config: {'verbose': False, 'alpha_start': 0.01, 'alpha_end': 2.0, 'alpha_steps': 15, 'd': 100, 'L': 2, 'beta': 1.0, 'lmbda': [0.1, 0.001, 0.0002, 0.0005, 0.0001], 'Delta_in': 0.5, 'Delta_list': [0.0], 'samples': 16, 'T': 10000, 'lr': 0.1, 'norm_init': 1.0, 'tol': 1e-06, 'n_test': 2000, 'rho_star': 0.5}
+========================================
+        EXPERIMENT START
+----------------------------------------
+Run index: 1
+Job ID: 2738996
+Device: cuda
+Results directory: /home/peucelle/tpiv-simulations/results/run_20251201_1728
+========================================
+----------------------------------------
+Experiment finished.
+Results saved in /home/peucelle/tpiv-simulations/results/run_20251201_1728
+Logs CSV: logs_1.csv
+----------------------------------------
+[Config] Converted config: {'verbose': False, 'alpha_start': 0.01, 'alpha_end': 2.0, 'alpha_steps': 15, 'd': 100, 'L': 2, 'beta': 1.0, 'lmbda': [0.1, 0.001, 0.0002, 0.0005, 0.0001], 'Delta_in': 0.5, 'Delta_list': [0.0], 'samples': 16, 'T': 10000, 'lr': 0.1, 'norm_init': 1.0, 'tol': 1e-06, 'n_test': 2000, 'rho_star': 0.5}
+========================================
+        EXPERIMENT START
+----------------------------------------
+Run index: 2
+Job ID: 2738997
+Device: cuda
+Results directory: /home/peucelle/tpiv-simulations/results/run_20251201_1728
+========================================
+----------------------------------------
+Experiment finished.
+Results saved in /home/peucelle/tpiv-simulations/results/run_20251201_1728
+Logs CSV: logs_2.csv
+----------------------------------------
+[Config] Converted config: {'verbose': False, 'alpha_start': 0.01, 'alpha_end': 2.0, 'alpha_steps': 15, 'd': 100, 'L': 2, 'beta': 1.0, 'lmbda': [0.1, 0.001, 0.0002, 0.0005, 0.0001], 'Delta_in': 0.5, 'Delta_list': [0.0], 'samples': 16, 'T': 10000, 'lr': 0.1, 'norm_init': 1.0, 'tol': 1e-06, 'n_test': 2000, 'rho_star': 0.5}
+========================================
+        EXPERIMENT START
+----------------------------------------
+Run index: 3
+Job ID: 2738998
+Device: cuda
+Results directory: /home/peucelle/tpiv-simulations/results/run_20251201_1728
+========================================
+----------------------------------------
+Experiment finished.
+Results saved in /home/peucelle/tpiv-simulations/results/run_20251201_1728
+Logs CSV: logs_3.csv
+----------------------------------------
+[Config] Converted config: {'verbose': False, 'alpha_start': 0.01, 'alpha_end': 2.0, 'alpha_steps': 15, 'd': 100, 'L': 2, 'beta': 1.0, 'lmbda': [0.1, 0.001, 0.0002, 0.0005, 0.0001], 'Delta_in': 0.5, 'Delta_list': [0.0], 'samples': 16, 'T': 10000, 'lr': 0.1, 'norm_init': 1.0, 'tol': 1e-06, 'n_test': 2000, 'rho_star': 0.5}
+========================================
+        EXPERIMENT START
+----------------------------------------
+Run index: 4
+Job ID: 2738999
+Device: cuda
+Results directory: /home/peucelle/tpiv-simulations/results/run_20251201_1728
+========================================
+----------------------------------------
+Experiment finished.
+Results saved in /home/peucelle/tpiv-simulations/results/run_20251201_1728
+Logs CSV: logs_4.csv
+----------------------------------------
+[Config] Converted config: {'verbose': False, 'alpha_start': 0.01, 'alpha_end': 2.0, 'alpha_steps': 15, 'd': 100, 'L': 2, 'beta': 1.0, 'lmbda': [0.1, 0.001, 0.0002, 0.0005, 0.0001], 'Delta_in': 0.5, 'Delta_list': [0.0], 'samples': 16, 'T': 10000, 'lr': 0.1, 'norm_init': 1.0, 'tol': 1e-06, 'n_test': 2000, 'rho_star': 0.5}
+========================================
+        EXPERIMENT START
+----------------------------------------
+Run index: 5
+Job ID: 2739000
+Device: cuda
+Results directory: /home/peucelle/tpiv-simulations/results/run_20251201_1728
+========================================
+----------------------------------------
+Experiment finished.
+Results saved in /home/peucelle/tpiv-simulations/results/run_20251201_1728
+Logs CSV: logs_5.csv
+----------------------------------------
+[Config] Converted config: {'verbose': False, 'alpha_start': 0.01, 'alpha_end': 2.0, 'alpha_steps': 15, 'd': 100, 'L': 2, 'beta': 1.0, 'lmbda': [0.1, 0.001, 0.0002, 0.0005, 0.0001], 'Delta_in': 0.5, 'Delta_list': [0.0], 'samples': 16, 'T': 10000, 'lr': 0.1, 'norm_init': 1.0, 'tol': 1e-06, 'n_test': 2000, 'rho_star': 0.5}
+========================================
+        EXPERIMENT START
+----------------------------------------
+Run index: 6
+Job ID: 2739001
+Device: cuda
+Results directory: /home/peucelle/tpiv-simulations/results/run_20251201_1728
+========================================
+----------------------------------------
+Experiment finished.
+Results saved in /home/peucelle/tpiv-simulations/results/run_20251201_1728
+Logs CSV: logs_6.csv
+----------------------------------------
+[Config] Converted config: {'verbose': False, 'alpha_start': 0.01, 'alpha_end': 2.0, 'alpha_steps': 15, 'd': 100, 'L': 2, 'beta': 1.0, 'lmbda': [0.1, 0.001, 0.0002, 0.0005, 0.0001], 'Delta_in': 0.5, 'Delta_list': [0.0], 'samples': 16, 'T': 10000, 'lr': 0.1, 'norm_init': 1.0, 'tol': 1e-06, 'n_test': 2000, 'rho_star': 0.5}
+========================================
+        EXPERIMENT START
+----------------------------------------
+Run index: 7
+Job ID: 2739002
+Device: cuda
+Results directory: /home/peucelle/tpiv-simulations/results/run_20251201_1728
+========================================
+----------------------------------------
+Experiment finished.
+Results saved in /home/peucelle/tpiv-simulations/results/run_20251201_1728
+Logs CSV: logs_7.csv
+----------------------------------------
+[Config] Converted config: {'verbose': False, 'alpha_start': 0.01, 'alpha_end': 2.0, 'alpha_steps': 15, 'd': 100, 'L': 2, 'beta': 1.0, 'lmbda': [0.1, 0.001, 0.0002, 0.0005, 0.0001], 'Delta_in': 0.5, 'Delta_list': [0.0], 'samples': 16, 'T': 10000, 'lr': 0.1, 'norm_init': 1.0, 'tol': 1e-06, 'n_test': 2000, 'rho_star': 0.5}
+========================================
+        EXPERIMENT START
+----------------------------------------
+Run index: 8
+Job ID: 2739003
+Device: cuda
+Results directory: /home/peucelle/tpiv-simulations/results/run_20251201_1728
+========================================
+----------------------------------------
+Experiment finished.
+Results saved in /home/peucelle/tpiv-simulations/results/run_20251201_1728
+Logs CSV: logs_8.csv
+----------------------------------------
+[Config] Converted config: {'verbose': False, 'alpha_start': 0.01, 'alpha_end': 2.0, 'alpha_steps': 15, 'd': 100, 'L': 2, 'beta': 1.0, 'lmbda': [0.1, 0.001, 0.0002, 0.0005, 0.0001], 'Delta_in': 0.5, 'Delta_list': [0.0], 'samples': 16, 'T': 10000, 'lr': 0.1, 'norm_init': 1.0, 'tol': 1e-06, 'n_test': 2000, 'rho_star': 0.5}
+========================================
+        EXPERIMENT START
+----------------------------------------
+Run index: 9
+Job ID: 2739004
+Device: cuda
+Results directory: /home/peucelle/tpiv-simulations/results/run_20251201_1728
+========================================
+----------------------------------------
+Experiment finished.
+Results saved in /home/peucelle/tpiv-simulations/results/run_20251201_1728
+Logs CSV: logs_9.csv
+----------------------------------------
+[Config] Converted config: {'verbose': False, 'alpha_start': 0.01, 'alpha_end': 2.0, 'alpha_steps': 15, 'd': 100, 'L': 2, 'beta': 1.0, 'lmbda': [0.1, 0.001, 0.0002, 0.0005, 0.0001], 'Delta_in': 0.5, 'Delta_list': [0.0], 'samples': 16, 'T': 10000, 'lr': 0.1, 'norm_init': 1.0, 'tol': 1e-06, 'n_test': 2000, 'rho_star': 0.5}
+========================================
+        EXPERIMENT START
+----------------------------------------
+Run index: 10
+Job ID: 2739005
+Device: cuda
+Results directory: /home/peucelle/tpiv-simulations/results/run_20251201_1728
+========================================
+----------------------------------------
+Experiment finished.
+Results saved in /home/peucelle/tpiv-simulations/results/run_20251201_1728
+Logs CSV: logs_10.csv
+----------------------------------------
+[Config] Converted config: {'verbose': False, 'alpha_start': 0.01, 'alpha_end': 2.0, 'alpha_steps': 15, 'd': 100, 'L': 2, 'beta': 1.0, 'lmbda': [0.1, 0.001, 0.0002, 0.0005, 0.0001], 'Delta_in': 0.5, 'Delta_list': [0.0], 'samples': 16, 'T': 10000, 'lr': 0.1, 'norm_init': 1.0, 'tol': 1e-06, 'n_test': 2000, 'rho_star': 0.5}
+========================================
+        EXPERIMENT START
+----------------------------------------
+Run index: 11
+Job ID: 2739006
+Device: cuda
+Results directory: /home/peucelle/tpiv-simulations/results/run_20251201_1728
+========================================
+----------------------------------------
+Experiment finished.
+Results saved in /home/peucelle/tpiv-simulations/results/run_20251201_1728
+Logs CSV: logs_11.csv
+----------------------------------------
+[Config] Converted config: {'verbose': False, 'alpha_start': 0.01, 'alpha_end': 2.0, 'alpha_steps': 15, 'd': 100, 'L': 2, 'beta': 1.0, 'lmbda': [0.1, 0.001, 0.0002, 0.0005, 0.0001], 'Delta_in': 0.5, 'Delta_list': [0.0], 'samples': 16, 'T': 10000, 'lr': 0.1, 'norm_init': 1.0, 'tol': 1e-06, 'n_test': 2000, 'rho_star': 0.5}
+========================================
+        EXPERIMENT START
+----------------------------------------
+Run index: 12
+Job ID: 2739007
+Device: cuda
+Results directory: /home/peucelle/tpiv-simulations/results/run_20251201_1728
+========================================
+----------------------------------------
+Experiment finished.
+Results saved in /home/peucelle/tpiv-simulations/results/run_20251201_1728
+Logs CSV: logs_12.csv
+----------------------------------------
+[Config] Converted config: {'verbose': False, 'alpha_start': 0.01, 'alpha_end': 2.0, 'alpha_steps': 15, 'd': 100, 'L': 2, 'beta': 1.0, 'lmbda': [0.1, 0.001, 0.0002, 0.0005, 0.0001], 'Delta_in': 0.5, 'Delta_list': [0.0], 'samples': 16, 'T': 10000, 'lr': 0.1, 'norm_init': 1.0, 'tol': 1e-06, 'n_test': 2000, 'rho_star': 0.5}
+========================================
+        EXPERIMENT START
+----------------------------------------
+Run index: 13
+Job ID: 2739008
+Device: cuda
+Results directory: /home/peucelle/tpiv-simulations/results/run_20251201_1728
+========================================
+----------------------------------------
+Experiment finished.
+Results saved in /home/peucelle/tpiv-simulations/results/run_20251201_1728
+Logs CSV: logs_13.csv
+----------------------------------------
+[Config] Converted config: {'verbose': False, 'alpha_start': 0.01, 'alpha_end': 2.0, 'alpha_steps': 15, 'd': 100, 'L': 2, 'beta': 1.0, 'lmbda': [0.1, 0.001, 0.0002, 0.0005, 0.0001], 'Delta_in': 0.5, 'Delta_list': [0.0], 'samples': 16, 'T': 10000, 'lr': 0.1, 'norm_init': 1.0, 'tol': 1e-06, 'n_test': 2000, 'rho_star': 0.5}
+========================================
+        EXPERIMENT START
+----------------------------------------
+Run index: 14
+Job ID: 2738994
+Device: cuda
+Results directory: /home/peucelle/tpiv-simulations/results/run_20251201_1728
+========================================
+----------------------------------------
+Experiment finished.
+Results saved in /home/peucelle/tpiv-simulations/results/run_20251201_1728
+Logs CSV: logs_14.csv
+----------------------------------------

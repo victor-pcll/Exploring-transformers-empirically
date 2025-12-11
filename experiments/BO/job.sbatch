@@ -12,7 +12,7 @@
 #SBATCH --mem-per-cpu=7000
 
 # Create a timestamp for the run directory
-RUN_TIMESTAMP=$(date +"%Y%m%d_%H%M%")
+RUN_TIMESTAMP=$(date +"%Y%m%d_%H%M")
 
 # Load all modules
 module load gcc

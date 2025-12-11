@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=histogram_task_S_MLP
+#SBATCH --job-name=histogram_task_MLP_S
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
@@ -8,8 +8,8 @@
 #SBATCH --output=/home/peucelle/tpiv-simulations/results/run_%x/log.txt
 #SBATCH --error=/home/peucelle/tpiv-simulations/results/run_%x/err.txt
 #SBATCH --chdir /home/peucelle/tpiv-simulations/experiments
-#SBATCH --array=0-14
-#SBATCH --mem-per-cpu=8000
+#SBATCH --array=0-2
+#SBATCH --mem-per-cpu=14000
 
 # Create a timestamp for the run directory
 RUN_TIMESTAMP=$(date +"%Y%m%d_%H%M")

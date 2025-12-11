@@ -9,10 +9,6 @@ This repository contains the code, experiments, and supplementary materials for 
 > *Author(s): Peucelle Victor*  
 > [Link to the paper (arXiv / conference / journal if available)]
 
-<a href="https://victor-pcll.github.io/Exploring-transformers-empirically/">
-  <img src="https://img.shields.io/badge/Docs-00aced?style=flat&logo=read-the-docs&logoColor=white" alt="Documentation"/>
-</a>
-
 ---
 
 ## 🛠️ Technologies & Libraries
@@ -44,18 +40,28 @@ tpiv-simulations/
 │
 ├── experiments/               
 │   ├── BO/                  
-│   │   ├── BO_exp_cluster.py
-│   │   └── BO_exp_cluster.sbatch
-│   ├── ERM_untied/                  
-│   │   ├── ERM_untied_exp_cluster.py
-│   │   └── ERM_untied_exp_cluster.sbatch
-│   ├── ERM_S/                  
-│   │   ├── ERM_S_exp_cluster.py
-│   │   └── ERM_S_exp_cluster.sbatch
-│   └── ERM_tied/                  
-│       ├── ERM_tied_exp_cluster.py
-│       └── ERM_tied_exp_cluster.sbatch      
-│
+│   │   ├── main.py
+│   │   ├── src/
+│   │   └── job.sbatch
+│   ├── ERM/  
+│   │   ├── ERM_untied/                  
+│   │   │   ├── ERM_untied_exp_cluster.py
+│   │   │   └── ERM_untied_exp_cluster.sbatch
+│   │   ├── ERM_S/                  
+│   │   │   ├── ERM_S_exp_cluster.py
+│   │   │   └── ERM_S_exp_cluster.sbatch
+│   │   └── ERM_tied/                  
+│   │       ├── ERM_tied_exp_cluster.py
+│   │       └── ERM_tied_exp_cluster.sbatch      
+│   └── histogram_task/
+│       ├── histo_S_MLP/                  
+│       │   ├── main.py
+│       │   ├── src/
+│       │   └── job.sbatch
+│       └── histo_tied_MLP/                  
+│           ├── main.py
+│           ├── src/
+│           └── job.sbatch    
 ├── results/                   
 │   └── run_<JOBID>/     
 │       ├── config.csv
@@ -68,16 +74,23 @@ tpiv-simulations/
 │       └── config_used.pkl
 │
 ├── notebooks/
-│   ├── analysis.ipynb
-│   └── sanity_check.ipynb
+│   ├── BO_visua.ipynb
+│   ├── ERM_S_visua.ipynb
+│   ├── ERM_tied_visua.ipynb
+│   ├── ERM_untied_visua.ipynb
+│   ├── histo_S_visua.ipynb
+│   └── histo_tied_visua.ipynb
 │
 ├── test/
 │   ├── test_cluster.py
+│   ├── notebook.ipynb
 │   └── test_cluster.sbatch
 │
 ├── adr/
 │   ├── 001-adr-cluster.md
-│   └── 002-adr-torch.md
+│   ├── 002-adr-torch.md
+│   ├── 003-adr-sphinx.md
+│   └── 004-adr-slurm.md
 │
 ├── requirements.txt
 └── pyproject.toml 
@@ -91,6 +104,7 @@ This project maintains important architectural decisions in the `adr/` folder:
 - [001-ADR Cluster](./adr/001-adr-cluster.md)
 - [002-ADR Torch](./adr/002-adr-torch.md)
 - [003-ADR Sphinx Documentation](./adr/003-adr-sphinx.md)
+- [004-ADR Slurm](./adr/004-adr-slurm.md)
 
 ---
 

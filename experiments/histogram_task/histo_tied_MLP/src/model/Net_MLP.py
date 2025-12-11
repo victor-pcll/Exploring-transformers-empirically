@@ -33,7 +33,9 @@ class Net(torch.nn.Module):
             i, j = torch.triu_indices(row=self.T, col=self.T, offset=1, device=eps.device)
             eps[..., j, i] = eps[..., i, j]
             A = A + torch.sqrt(torch.tensor(delta_in, device=x.device, dtype=x.dtype)) * eps * M
-        x = torch.matmul(torch.nn.Softmax(dim=-1)(self.beta * A), x) # x.shape = (N, T, input_dim)
+        attn = torch.nn.Softmax(dim=-1)(self.beta * A)
+        self.attn = attn
+        x = torch.matmul(attn, x) # x.shape = (N, T, input_dim)
         x = self.W1(x) # x.shape = (N, T, MLP_dim)
         x = self.relu(x) # x.shape = (N, T, MLP_dim)
         x = self.W2(x) # x.shape = (N, T, n_classes)
