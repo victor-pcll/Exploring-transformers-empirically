@@ -11,6 +11,7 @@ from src.utils.conversion import convert_to_numpy, clean_list, clean_accuracy_li
 from src.utils.statistics import safe_mean, safe_std
 from src.utils.metrics import accuracy
 from src.utils.evaluation import evaluate_student
+from src.training.cross_validation import cross_validate_regularization
 
 def run_experiment(config):
     """
@@ -55,8 +56,8 @@ def run_experiment(config):
         acc_fine_tune_runs = []
         acc_train_last_runs = []
 
-        # Prepare datasets
         train_dataset, valid_dataset, test_dataset, _ = prepare_dataset(config)
+        config["lambda"] = cross_validate_regularization(config, train_dataset, config["k_folds"])
 
         for _ in range(config["samples"]):
 

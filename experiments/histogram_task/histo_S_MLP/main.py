@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     # Alpha list
     alpha_start = 0.1
-    alpha_end = 30.0
+    alpha_end = 10.0
     alpha_steps = 15
     alpha_list = np.linspace(alpha_start, alpha_end, alpha_steps).tolist()
     alpha = alpha_list[run_index] if run_index < len(alpha_list) else alpha_list[-1]
@@ -47,7 +47,8 @@ if __name__ == "__main__":
         "alpha": alpha,
         "rho": 1.0,
         "beta": 1.0,
-        "lambda": 0.0001,
+        "lambda_candidates": [0.00001, 0.0001, 0.001, 0.01, 0.1],
+        "k_folds": 3,
         "samples": 20,
         "max_iter": 5000,
         "max_fine_tune_iter": 1000,
@@ -56,7 +57,7 @@ if __name__ == "__main__":
         "norm_init": 1.0,
         "tol": 1e-5,
         "N_test": 1000,
-        "p_fine_tune": 0.0,
+        "N_ft": 100,
         "device": device,
         "logger": logger,
         "run_dir": run_dir,
@@ -67,7 +68,6 @@ if __name__ == "__main__":
 
     config["R"] = int(config["rho"] * config["D"])
     config["N_train"] = int(config["alpha"] * config["D"])   # MLP : n = alpha * d 
-    config["N_ft"] = max(1, int(config["beta"] * config["D"] * config["p_fine_tune"]))
     config["N"] = config["N_train"] + config["N_ft"] + config["N_test"]
 
     # --- Header log ---
