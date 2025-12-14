@@ -16,22 +16,13 @@ class Net(torch.nn.Module):
         self.W1 = torch.nn.Linear(input_dim, MLP_dim, bias=True)
         self.W2 = torch.nn.Linear(MLP_dim, T + 1, bias=False)
         self.S = torch.nn.Parameter(torch.empty(self.D, self.D))
-        torch.nn.init.uniform_(self.S, -norm, norm)
+        torch.nn.init.normal_(self.S, mean=0.0, std=1.0 / np.sqrt(self.D))
         self.to(device)
 
     def forward(self, x, delta_in=0.0):
         x = x.to(self.device)  # x.shape = (N, T)
         x = self.embed(x)     # x.shape = (N, T, input_dim)
-        A = torch.einsum("nap,pq,nbq->nab", x, self.S, x) / (self.D ** 1.5) # attention_matrix.shape = (N, T, T)
-        trace_part = torch.norm(self.S)**2 / (self.D ** 1.5)
-        # A = A - trace_part * torch.eye(self.T, device=x.device) # x.shape = (N, T, T)
-        if delta_in > 0.0:
-            M = torch.full((self.T, self.T), 1.0/torch.sqrt(torch.tensor(2.0, device=x.device, dtype=x.dtype)), device=x.device, dtype=x.dtype)
-            M.diagonal().fill_(1)
-            eps = torch.normal(0.0, 1.0, x.shape, device=x.device, dtype=x.dtype)
-            i, j = torch.triu_indices(row=self.T, col=self.T, offset=1, device=eps.device)
-            eps[..., j, i] = eps[..., i, j]
-            A = A + torch.sqrt(torch.tensor(delta_in, device=x.device, dtype=x.dtype)) * eps * M
+        A = torch.einsum("nap,pq,nbq->nab", x, self.S, x) / (self.D ** 0.5) # attention_matrix.shape = (N, T, T)
         x = torch.matmul(torch.nn.Softmax(dim=-1)(self.beta * A), x) # x.shape = (N, T, input_dim)
         x = self.W1(x) # x.shape = (N, T, MLP_dim)
         x = self.relu(x) # x.shape = (N, T, MLP_dim)

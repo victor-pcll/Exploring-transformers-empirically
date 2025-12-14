@@ -1,52 +1,58 @@
-import os
-import pickle
+import torch
 import numpy as np
 import pandas as pd
-import torch
-from src.models.Net_S import Net
-from src.training.train_student import train_student_on_data
-from src.utils.S_MSE import S_MSE
+import os
+import pickle
+import logging
+import sys
 
-def run_experiment(alpha_idx=0, D=100, L=2, rho=1.00, beta=1.0,
+from src.model import Net
+from src.training import train_student_on_data, S_MSE, compute_S_from_W 
+
+def run_experiment(alpha_idx=0, D=100, L=2, rho=1.0, rho_star=0.5, beta=1.0,
                    lam_list=[0.1, 0.01, 0.001, 0.0001, 0.00001], Delta_list=[0.0], Delta_in=0.5,
                    samples=8, T=10000, learning_rate=0.1, norm_init=1.0,
-                   tol=1e-6, N_test=2000, base_dir="./results", verbose=False,  alpha_list = np.linspace(0.005, 0.5, 10),
+                   tol=1e-6, N_test=2000, base_dir="./results", verbose=False, alpha_list=np.linspace(0.005, 0.5, 10),
                    run_index=None):
-
+    """
+    Exécute une série d'expériences Teacher-Student pour différents paramètres.
+    """
     all_results = []
-
+    
     if run_index is not None and alpha_list is not None:
         alpha_list = [alpha_list[run_index]]
 
     for alpha_idx, alpha in enumerate(alpha_list):
+        R = int(rho * D)        
+        R_star = int(rho_star * D)
         beta_star = beta
         os.makedirs(base_dir, exist_ok=True)
 
         for lam_cur in lam_list:
             for Delta_cur in Delta_list:
-                # --- Étape d'entraînement du teacher ---
                 N = int(alpha * D**2)
                 with torch.no_grad():
-                    teacher = Net(D, L, norm=1.0, beta=beta_star)
-                    teacher.init_teacher()
-                S_teacher = teacher.S.detach().cpu().numpy()
+                    teacher = Net(D, R_star, L, norm=1.0, beta=beta_star)
+                W_Q_teacher = teacher.W_Q.weight.detach().cpu().numpy()
+                W_K_teacher = teacher.W_K.weight.detach().cpu().numpy()
 
                 MSE_runs, label_err_runs, label_err_runs_noise = [], [], []
                 train_data_runs, train_reg_runs, total_loss_runs = [], [], []
-                S_runs = []
+                W_Q_runs, W_K_runs = [], []
 
-                for _ in range(samples):
+                for i in range(samples):
                     x_train = torch.normal(0, 1, (N, L, D))
                     with torch.no_grad():
                         y_train = teacher(x_train, delta_in=Delta_in)
 
-                    S_last, data_loss_i, reg_loss_i = train_student_on_data(
-                        D, L, beta, lam_cur, x_train, y_train,
+                    W_Q_last, W_K_last, data_loss_i, reg_loss_i = train_student_on_data(
+                        D, L, R, beta, lam_cur, x_train, y_train,
                         rho=rho, T=T, learning_rate=learning_rate, norm_init=norm_init, tol=tol
                     )
-                    S_runs.append(S_last)
+                    W_Q_runs.append(W_Q_last)
+                    W_K_runs.append(W_K_last)
 
-                    mse_i = S_MSE(S_last, S_teacher, D)
+                    mse_i = S_MSE(W_Q_last, W_K_last, W_Q_teacher, W_K_teacher, R, R_star, D)
                     MSE_runs.append(mse_i)
 
                     # --- Tests ---
@@ -55,10 +61,12 @@ def run_experiment(alpha_idx=0, D=100, L=2, rho=1.00, beta=1.0,
                         y_test_teacher = teacher(x_test, delta_in=0.0)
                         y_test_teacher_noise = teacher(x_test, delta_in=Delta_in)
 
-                    student_eval = Net(D, L, norm=0.0, beta=beta)
+                    student_eval = Net(D, R, L, norm=0.0, beta=beta)
                     with torch.no_grad():
-                        student_eval.S.data.copy_(torch.tensor(S_last))
+                        student_eval.W_Q.weight.copy_(torch.tensor(W_Q_last))
+                        student_eval.W_K.weight.copy_(torch.tensor(W_K_last))
                         y_test_student = student_eval(x_test, delta_in=0.0)
+                        
                         label_err_i = 1/N_test * torch.sum((y_test_student - y_test_teacher) ** 2).item()
                         label_err_i_noise = 1/N_test * torch.sum((y_test_student - y_test_teacher_noise) ** 2).item()
 
@@ -68,7 +76,6 @@ def run_experiment(alpha_idx=0, D=100, L=2, rho=1.00, beta=1.0,
                     train_reg_runs.append(reg_loss_i)
                     total_loss_runs.append(data_loss_i + reg_loss_i)
 
-                # --- Stockage des résultats ---
                 results = {
                     "alpha": alpha,
                     "alpha_idx": alpha_idx,
@@ -83,23 +90,26 @@ def run_experiment(alpha_idx=0, D=100, L=2, rho=1.00, beta=1.0,
                     "train_data_mean": float(np.mean(train_data_runs)/D**2),
                     "train_reg_mean": float(np.mean(train_reg_runs)/D**2),
                     "train_total_mean": float(np.mean(total_loss_runs)/D**2),
-                    "S_runs": S_runs
+                    "W_Q_runs": W_Q_runs,
+                    "W_K_runs": W_K_runs
                 }
                 all_results.append(results)
 
-    # Save logs and W_runs per alpha_idx to avoid overwriting
-    df_results = pd.DataFrame([{k: v for k, v in res.items() if k != "S_runs"} for res in all_results])
+
+    # --- Sauvegarde des résultats et logs ---
+    df_results = pd.DataFrame([{k: v for k, v in res.items() if k != "W_Q_runs" and k != "W_K_runs"} for res in all_results])
     logs_csv_path = os.path.join(base_dir, f"logs_{run_index}.csv" if run_index is not None else "logs.csv")
     df_results.to_csv(logs_csv_path, index=False)
 
-    # --- Save config as CSV ---
+    # --- Sauvegarde de la config (uniquement les paramètres simples) ---
     config_dict = {
-        "alpha": alpha,
+        "alpha": alpha, # Stocker le dernier alpha traité
         "D": D,
         "L": L,
         "rho": rho,
+        "rho_star": rho_star,
         "beta": beta,
-        "lam": lam_cur,
+        "lam": lam_cur, # Stocker le dernier lambda traité
         "Delta_in": Delta_in,
         "samples": samples,
         "T": T,
@@ -116,10 +126,17 @@ def run_experiment(alpha_idx=0, D=100, L=2, rho=1.00, beta=1.0,
     else:
         config_df.to_csv(config_csv_path, mode='a', header=True, index=False)
 
-    # Sauvegarde de la liste de tous les W_Q_runs dans un fichier pickle
-    S_runs_all = [res["S_runs"] for res in all_results]
-    pickle_path = os.path.join(base_dir, f"S_runs_{run_index}.pkl")
-    with open(pickle_path, "wb") as f:
-        pickle.dump(S_runs_all, f)    
+    # Sauvegarde des listes de W_Q_runs et W_K_runs dans des fichiers pickle
+    W_Q_runs_all = [res["W_Q_runs"] for res in all_results]
+    pickle_path_Q = os.path.join(base_dir, f"W_Q_runs_{run_index}.pkl")
+    with open(pickle_path_Q, "wb") as f:
+        pickle.dump(W_Q_runs_all, f)
+
+    W_K_runs_all = [res["W_K_runs"] for res in all_results]
+    pickle_path_K = os.path.join(base_dir, f"W_K_runs_{run_index}.pkl")
+    with open(pickle_path_K, "wb") as f:
+        pickle.dump(W_K_runs_all, f)
+        
+    print(f"[INFO] Sauvegarde effectuée dans {os.path.abspath(base_dir)}")
 
     return df_results, alpha_list

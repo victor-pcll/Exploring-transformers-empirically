@@ -8,7 +8,7 @@
 #SBATCH --output=/home/peucelle/tpiv-simulations/results/run_%x/log.txt
 #SBATCH --error=/home/peucelle/tpiv-simulations/results/run_%x/err.txt
 #SBATCH --chdir /home/peucelle/tpiv-simulations/experiments
-#SBATCH --array=0-2
+#SBATCH --array=0-14
 #SBATCH --mem-per-cpu=12000
 
 # Create a timestamp for the run directory

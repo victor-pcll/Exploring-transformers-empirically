@@ -25,31 +25,38 @@ if __name__ == "__main__":
     logger.info(f"🖥 Device: {device} | Run index: {run_index} | Job ID: {job_id}")
 
     # Alpha list
-    alpha_start = 5
-    alpha_end = 15.0
-    alpha_steps = 3
+    alpha_start = 0.1
+    alpha_end = 30.0
+    alpha_steps = 15
     alpha_list = np.linspace(alpha_start, alpha_end, alpha_steps).tolist()
     alpha = alpha_list[run_index] if run_index < len(alpha_list) else alpha_list[-1]
+
+    # d MLP list 
+    d_mlp_start = 1.0
+    d_mlp_end = 30.0
+    d_mlp_steps = 15
+    d_mlp_list = np.linspace(d_mlp_start, d_mlp_end, d_mlp_steps).tolist()
+    d_mlp = d_mlp_list[run_index] if run_index < len(d_mlp_list) else d_mlp_list[-1]
 
     # Configuration
     config = {
         "D": 100,
         "L": 15,
         "T" : 30,
-        "d_mlp_list": [5, 10, 15, 20, 25, 30],
+        "d_mlp_list": [50], # [int(round(d_mlp))]
         "alpha": alpha,
         "rho": 1.0,
         "beta": 1.0,
         "lambda": 0.0001,
-        "samples": 100,
+        "samples": 20,
         "max_iter": 5000,
         "max_fine_tune_iter": 1000,
         "learning_rate": 0.01,
         "learning_rate_fine_tune": 0.01,
         "norm_init": 1.0,
         "tol": 1e-5,
-        "p_test": 0.15,
-        "p_fine_tune": 0.15,
+        "N_test": 1000,
+        "p_fine_tune": 0.0,
         "device": device,
         "logger": logger,
         "run_dir": run_dir,
@@ -59,7 +66,9 @@ if __name__ == "__main__":
     }
 
     config["R"] = int(config["rho"] * config["D"])
-    config["N"] = int(config["alpha"] * config["D"])  # MLP : n = alpha * d 
+    config["N_train"] = int(config["alpha"] * config["D"])   # MLP : n = alpha * d 
+    config["N_ft"] = max(1, int(config["beta"] * config["D"] * config["p_fine_tune"]))
+    config["N"] = config["N_train"] + config["N_ft"] + config["N_test"]
 
     # --- Header log ---
     logger.info("========================================\n🧪 EXPERIMENT START\n----------------------------------------")

@@ -2,6 +2,7 @@ from datetime import datetime
 import torch
 import numpy as np
 import sys
+import os
 import pickle
 from src.utils.seed import init_torch
 from src.utils.config_utils import convert_numeric_config
@@ -25,7 +26,7 @@ if __name__ == "__main__":
     config = {
         "verbose": False,
         "alpha_start": 0.01,
-        "alpha_end": 2.0,
+        "alpha_end": 1.0,
         "alpha_steps": 15,
         "d": 100,
         "L": 2,
@@ -39,7 +40,6 @@ if __name__ == "__main__":
         "norm_init": 1.0,
         "tol": 1e-6,
         "n_test": 2000,
-        "rho_star": 0.5,     # rho teacher
     }
 
     # Seed & numeric conversion
@@ -56,7 +56,6 @@ if __name__ == "__main__":
         base_dir=run_dir,
         D=config["d"],
         L=config["L"],
-        rho_star=config["rho_star"],
         beta=config["beta"],
         lam_list=config["lmbda"],
         Delta_list=config["Delta_list"],
