@@ -22,11 +22,6 @@ class Net(nn.Module):
         Q = self.W_Q(x) / np.sqrt(self.D)
         K = self.W_K(x) / np.sqrt(self.D)
         attention_matrix = torch.einsum('nap,nbp->nab', Q, K) / np.sqrt(self.R)
-        trace_part = (
-            torch.norm(self.W_Q.weight)**2 +
-            torch.norm(self.W_K.weight)**2
-        ) / np.sqrt(2 * self.R * self.D**2)
-        
         x = attention_matrix 
         if delta_in > 0.0:
             M = torch.full((self.L, self.L), 1.0 / np.sqrt(2), device=x.device, dtype=x.dtype)

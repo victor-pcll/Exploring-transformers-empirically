@@ -23,10 +23,18 @@ def prepare_dataset(config):
     full_dataset = HistogramDataset(config)
     N = len(full_dataset)
 
-    train_dataset, valid_dataset, test_dataset = torch.utils.data.random_split(
-        full_dataset,
-        [config["N_train"], config["N_ft"], config["N_test"]],
-        generator=torch.Generator().manual_seed(config["seed"])
-    )
+    if config["N_ft"] == 0 :
+        train_dataset, test_dataset = torch.utils.data.random_split(
+            full_dataset,
+            [config["N_train"], config["N_test"]],
+            generator=torch.Generator().manual_seed(config["seed"])
+        )
+        valid_dataset = None
+    else :
+        train_dataset, valid_dataset, test_dataset = torch.utils.data.random_split(
+            full_dataset,
+            [config["N_train"], config["N_ft"], config["N_test"]],
+            generator=torch.Generator().manual_seed(config["seed"])
+        )
 
     return train_dataset, valid_dataset, test_dataset, full_dataset

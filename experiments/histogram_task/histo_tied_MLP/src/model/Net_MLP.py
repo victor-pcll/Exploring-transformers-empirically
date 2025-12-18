@@ -26,13 +26,6 @@ class Net(torch.nn.Module):
         attention_matrix = torch.einsum('nap,nbp->nab', Wx, Wx) / np.sqrt(self.R)  # attention_matrix.shape = (N, T, T)
         trace_part = torch.norm(self.W0.weight)**2 / np.sqrt(self.R * self.D**2)
         A = attention_matrix - trace_part * torch.eye(self.T, device=x.device) # x.shape = (N, T, T)
-        if delta_in > 0.0:
-            M = torch.full((self.T, self.T), 1.0/torch.sqrt(torch.tensor(2.0, device=x.device, dtype=x.dtype)), device=x.device, dtype=x.dtype)
-            M.diagonal().fill_(1)
-            eps = torch.normal(0.0, 1.0, x.shape, device=x.device, dtype=x.dtype)
-            i, j = torch.triu_indices(row=self.T, col=self.T, offset=1, device=eps.device)
-            eps[..., j, i] = eps[..., i, j]
-            A = A + torch.sqrt(torch.tensor(delta_in, device=x.device, dtype=x.dtype)) * eps * M
         attn = torch.nn.Softmax(dim=-1)(self.beta * A)
         self.attn = attn
         x = torch.matmul(attn, x) # x.shape = (N, T, input_dim)

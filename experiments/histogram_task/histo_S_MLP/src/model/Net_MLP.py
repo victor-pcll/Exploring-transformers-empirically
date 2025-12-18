@@ -23,7 +23,9 @@ class Net(torch.nn.Module):
         x = x.to(self.device)  # x.shape = (N, T)
         x = self.embed(x)     # x.shape = (N, T, input_dim)
         A = torch.einsum("nap,pq,nbq->nab", x, self.S, x) / (self.D ** 0.5) # attention_matrix.shape = (N, T, T)
-        x = torch.matmul(torch.nn.Softmax(dim=-1)(self.beta * A), x) # x.shape = (N, T, input_dim)
+        attn = torch.nn.Softmax(dim=-1)(self.beta * A)
+        self.attn = attn
+        x = torch.matmul(attn, x) 
         x = self.W1(x) # x.shape = (N, T, MLP_dim)
         x = self.relu(x) # x.shape = (N, T, MLP_dim)
         x = self.W2(x) # x.shape = (N, T, n_classes)
