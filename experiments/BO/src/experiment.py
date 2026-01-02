@@ -76,8 +76,8 @@ def run_experiment(config, run_index=None):
                 y_test_student = student_eval(x_test, delta_in=0.0)
 
             # squared errors
-            label_err_i = torch.sum((y_test_student - y_test_teacher) ** 2).item()
-            label_err_i_noise = torch.sum((y_test_student - y_test_teacher_noise) ** 2).item()
+            label_err_i = 1/N_test * torch.sum((y_test_student - y_test_teacher) ** 2).item()
+            label_err_i_noise = 1/N_test * torch.sum((y_test_student - y_test_teacher_noise) ** 2).item()
 
             label_err_runs.append(label_err_i)
             label_err_runs_noise.append(label_err_i_noise)
@@ -96,15 +96,15 @@ def run_experiment(config, run_index=None):
             "MSE_mean": float(np.mean(MSE_runs)),
             "MSE_std": float(np.std(MSE_runs, ddof=1)) if len(MSE_runs) > 1 else 0.0,
 
-            "label_err_mean": float(np.mean(label_err_runs) / D**2),
-            "label_err_std": float(np.std(label_err_runs, ddof=1) / D**2) if len(label_err_runs) > 1 else 0.0,
+            "label_err_mean": float(np.mean(label_err_runs)),
+            "label_err_std": float(np.std(label_err_runs, ddof=1)) if len(label_err_runs) > 1 else 0.0,
 
-            "label_err_mean_noise": float(np.mean(label_err_runs_noise) / D**2),
-            "label_err_std_noise": float(np.std(label_err_runs_noise, ddof=1) / D**2) if len(label_err_runs_noise) > 1 else 0.0,
+            "label_err_mean_noise": float(np.mean(label_err_runs_noise)),
+            "label_err_std_noise": float(np.std(label_err_runs_noise, ddof=1)) if len(label_err_runs_noise) > 1 else 0.0,
 
-            "train_data_mean": float(np.mean(train_data_runs) / D),
-            "train_reg_mean": float(np.mean(train_reg_runs) / D),
-            "train_total_mean": float(np.mean(total_loss_runs) / D),
+            "train_data_mean": float(np.mean(train_data_runs)),
+            "train_reg_mean": float(np.mean(train_reg_runs)),
+            "train_total_mean": float(np.mean(total_loss_runs)),
 
             "W_runs": W_runs
         }

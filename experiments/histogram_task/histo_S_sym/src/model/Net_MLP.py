@@ -28,7 +28,6 @@ class Net(torch.nn.Module):
         A = torch.einsum("nap,pq,nbq->nab", x, S_sym, x) / (self.D ** 0.5)
         attn = torch.nn.Softmax(dim=-1)(self.beta * A)
         self.attn = attn
-        
         x = torch.matmul(attn, x)
         x = self.W1(x)
         x = self.relu(x)

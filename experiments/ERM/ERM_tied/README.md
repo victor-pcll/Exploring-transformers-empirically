@@ -1,95 +1,22 @@
-# ERM-Tied Student–Teacher Experiment
+# Synthetic Experiment: Tied Attention (Teacher-Student)
+
+This directory implements the synthetic high-dimensional analysis for **Tied (Factorized)** attention mechanisms.
 
 ## 1. Overview
+The goal is to analyze the generalization performance of a symmetric Positive Semi-Definite (PSD) prior in a controlled setting. We study the student's ability to recover a teacher's interaction matrix $S^*$ under Gaussian inputs.
 
-This experiment implements a tied-weight student–teacher framework in high dimension.
-A randomly initialized teacher network generates labels for Gaussian inputs, and a student network is trained to recover both:
-	•	the output behavior of the teacher,
-	•	and the structural correlation matrix of its weight tensor.
+## 2. Mathematical Setup
+* **High-Dimensional Limit**: We operate where $d \to \infty$ and $n \propto d^2$, with a fixed sample complexity $\alpha = n/d^2$.
+* **Teacher/Student Model**: Both are parameterized as $S = \frac{1}{\sqrt{rd}}WW^\top$, enforcing symmetry and PSD geometry.
+* **Input Distribution**: Independent standard Gaussian tokens $x_a^\mu \sim \mathcal{N}(0, \mathbb{I}_d)$.
+* **Target Generation**: Scores are computed as centered quadratic forms $h_{ab}^\mu$ with additive noise $\Delta$.
 
-The model is a simplified, linearized attention mechanism with a single weight matrix W \in \mathbb{R}^{R \times D}, where:
-	•	D: input dimension
-	•	R: hidden dimension
-	•	L: number of tokens
-	•	\rho = R/D: width ratio
-	•	\alpha = N/D^2: sample density
+## 3. Key Findings
+* **Learning Acceleration**: The PSD constraint significantly shifts the interpolation threshold to a lower sample complexity ($\alpha \approx 0.2$) compared to asymmetric models.
+* **Data Efficiency**: Enforcing the $WW^\top$ structure reduces the effective model capacity, leading to superior data efficiency in the low-$\alpha$ regime.
+* **Double Descent**: Under noisy Empirical Risk Minimization (ERM), a distinct generalization peak emerges around $\alpha \approx 0.2$ when regularization is weak.
 
-The goal is to study how the student reconstructs the teacher as a function of:
-	•	sampling load \alpha,
-	•	width mismatch \rho, \rho_\*,
-	•	regularization \lambda,
-	•	and noise level \Delta_\text{in}.
-
-⸻
-
-## 2. Model
-
-Both networks follow the same architecture:
-
-Forward computation
-
-Given input x \in \mathbb{R}^{N \times L \times D}:
-	1.	Linear mapping
-xW^\top / \sqrt{D}
-	2.	Attention score
-A_{ij} = \frac{x_i W^\top W x_j^\top}{\sqrt{R}} -
-\frac{\|W\|^2}{\sqrt{R} D^2} \delta_{ij}
-	3.	Optional symmetric Gaussian noise controlled by \Delta_\text{in}
-	4.	Softmax at temperature \beta
-
-⸻
-
-## 3. Training Procedure
-
-The student minimizes:
-
-\mathcal{L} =
-\|y_{\text{student}} - y_{\text{teacher}}\|^2 +
-\lambda_\text{eff} \|W_{\text{student}}\|^2,
-\qquad
-\lambda_\text{eff} = \frac{\lambda}{\sqrt{\rho}}.
-
-Training stops early when the loss variation drops below a tolerance.
-
-⸻
-
-## 4. Metrics
-
-The following quantities are recorded for every (\alpha, \lambda):
-
-(a) Structural reconstruction
-
-We compute:
-
-S(W) = \frac{W^\top W}{\sqrt{R D}}
-
-and record:
-
-\text{MSE} = \frac{1}{D} \| S_\text{student} - S_\text{teacher} \|^2.
-
-(b) Label errors
-	•	without teacher noise
-\|y_s - y_t\|^2 / D^2
-	•	with teacher noise
-\|y_s - y_{t,\text{noisy}}\|^2 / D^2
-
-(c) Training losses
-	•	mean empirical loss
-	•	mean regularization loss
-	•	total loss
-
-(d) Complete student weights
-
-Stored as .pkl files for later analysis.
-
-⸻
-
-## 5. Output Files
-
-Each experiment run produces:
-results/run_<JOB_ID>/
-    logs_<run_index>.csv
-    summary.csv
-    config.csv
-    experiment_<run_index>_<JOB_ID>.log
-    W_runs_<run_index>.pkl
+## 4. Usage
+To run the synthetic tied experiment:
+```bash
+python run_synthetic.py --arch tied --rho 0.5 --alpha_range 0.01 1.0 --noise 0.5

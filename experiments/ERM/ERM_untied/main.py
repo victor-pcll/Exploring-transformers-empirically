@@ -52,7 +52,7 @@ if __name__ == "__main__":
         "norm_init": 1.0,
         "tol": 1e-6,
         "n_test": 2000,
-        "rho": 0.5,
+        "rho": 0.3,
         "rho_star": 0.5  
     }
 

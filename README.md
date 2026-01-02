@@ -45,16 +45,27 @@ tpiv-simulations/
 │   │   └── job.sbatch
 │   ├── ERM/  
 │   │   ├── ERM_untied/                  
-│   │   │   ├── ERM_untied_exp_cluster.py
-│   │   │   └── ERM_untied_exp_cluster.sbatch
+│   │   │   ├── main.py
+│   │   │   ├── src/
+│   │   │   └── job.sbatch
 │   │   ├── ERM_S/                  
-│   │   │   ├── ERM_S_exp_cluster.py
-│   │   │   └── ERM_S_exp_cluster.sbatch
+│   │   │   ├── main.py
+│   │   │   ├── src/
+│   │   │   └── job.sbatch
 │   │   └── ERM_tied/                  
-│   │       ├── ERM_tied_exp_cluster.py
-│   │       └── ERM_tied_exp_cluster.sbatch      
+│   │       ├── main.py
+│   │       ├── src/
+│   │       └── job.sbatch 
 │   └── histogram_task/
 │       ├── histo_S_MLP/                  
+│       │   ├── main.py
+│       │   ├── src/
+│       │   └── job.sbatch
+│       ├── histo_untied_MLP/                  
+│       │   ├── main.py
+│       │   ├── src/
+│       │   └── job.sbatch
+│       ├── histo_S_sym/                  
 │       │   ├── main.py
 │       │   ├── src/
 │       │   └── job.sbatch
@@ -62,6 +73,7 @@ tpiv-simulations/
 │           ├── main.py
 │           ├── src/
 │           └── job.sbatch    
+│
 ├── results/                   
 │   └── run_<JOBID>/     
 │       ├── config.csv
@@ -75,11 +87,12 @@ tpiv-simulations/
 │
 ├── notebooks/
 │   ├── BO_visua.ipynb
-│   ├── ERM_S_visua.ipynb
-│   ├── ERM_tied_visua.ipynb
-│   ├── ERM_untied_visua.ipynb
-│   ├── histo_S_visua.ipynb
-│   └── histo_tied_visua.ipynb
+│   ├── Synthetic_S_visua.ipynb
+│   ├── Synthetic_tied_visua.ipynb
+│   ├── Synthetic_untied_visua.ipynb
+│   ├── Real_data_S_visua.ipynb
+│   ├── Real_data_untied_visua.ipynb
+│   └── Real_data_tied_visua.ipynb
 │
 ├── test/
 │   ├── test_cluster.py
