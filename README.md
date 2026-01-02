@@ -7,7 +7,6 @@ This repository contains the code, experiments, and supplementary materials for 
 
 > **Exploring Transformers Empirically**  
 > *Author(s): Peucelle Victor*  
-> [Link to the paper (arXiv / conference / journal if available)]
 
 ---
 
