@@ -73,14 +73,14 @@ For each $(\alpha, \rho)$ combination, multiple independent runs are performed. 
 1. **Structural reconstruction error**  
    - Normalized correlation matrices:  
      $$
-     S = \frac{W^\top W}{\sqrt{R D}}
+     S = W^\top W / (\sqrt{R D})
      $$  
    - Measured via mean squared error: $\text{MSE}(S_\text{student}, S_\text{teacher})$.
 
 2. **Prediction error**  
    - On an independent test set:  
-     - Noise-free teacher: $\|y_{\text{student}} - y_{\text{teacher}}\|^2 / D^2$  
-     - Noisy teacher: $\|y_{\text{student}} - y_{\text{teacher noisy}}\|^2 / D^2$
+     - Noise-free teacher: $\|y_{\text{student}} - y_{\text{teacher}}\|^2$  
+     - Noisy teacher: $\|y_{\text{student}} - y_{\text{teacher noisy}}\|^2$
 
 3. **Training losses**  
    - Mean training data loss  

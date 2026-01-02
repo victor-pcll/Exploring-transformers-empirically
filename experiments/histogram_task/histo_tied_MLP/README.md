@@ -1,6 +1,6 @@
 # Experiment: Tied Attention on the Structured Discrete Histogram Task
 
-This directory contains the implementation and experimental scripts for analyzing the learning dynamics and inductive bias of **Tied (Factorized) Attention** applied to a structured discrete counting task[cite: 8, 282].
+This directory contains the implementation and experimental scripts for analyzing the learning dynamics and inductive bias of **Tied (Factorized) Attention** applied to a structured discrete counting task.
 
 ## 1. Overview
 The primary objective of this experiment is to investigate how the **Positive Semi-Definite (PSD) geometry** inherent to tied attention architectures promotes data efficiency and semantic learning. By enforcing a $S = \frac{1}{\sqrt{rd}}WW^\top$ parameterization, we evaluate the model's ability to recover a counting rule from discrete sequences.
@@ -8,14 +8,14 @@ The primary objective of this experiment is to investigate how the **Positive Se
 ## 2. Task Definition: The Histogram Task
 The network must perform exact counting operations on discrete sequences.
 * **Input**: Sequences of length $T=30$ composed of discrete tokens from a vocabulary $L=15$.
-* **Target**: For each position $i$, the model predicts the total frequency of the token $x_i$ in the sequence: $y_i = \sum_{j=1}^{T} \mathbb{1}(x_i = x_j)$[cite: 137, 138].
-* **Complexity**: To ensure non-triviality, data is generated via a controlled random composition procedure that guarantees significant token repetitions ($P(X \ge 4) \ge 0.1$)[cite: 141, 649, 698].
+* **Target**: For each position $i$, the model predicts the total frequency of the token $x_i$ in the sequence: $y_i = \sum_{j=1}^{T} \mathbb{1}(x_i = x_j)$.
+* **Complexity**: To ensure non-triviality, data is generated via a controlled random composition procedure that guarantees significant token repetitions ($P(X \ge 4) \ge 0.1$).
 
 ## 3. Architecture
-[cite_start]The student model consists of a three-stage pipeline[cite: 157]:
-1. [cite_start]**Embedding Layer**: Maps discrete tokens to a continuous vector space $E \in \mathbb{R}^{L \times d}$[cite: 158].
-2. [cite_start]**Tied Attention**: A single-head mechanism where the interaction matrix is factorized as $S = \frac{1}{\sqrt{rd}}WW^\top$[cite: 165, 169]. [cite_start]A zero-diagonal constraint is applied to match the generative teacher framework[cite: 72].
-3. [cite_start]**MLP Readout**: A two-layer MLP that processes context vectors to output logits over $C=T$ frequency classes[cite: 175, 182].
+The student model consists of a three-stage pipeline:
+1. **Embedding Layer**: Maps discrete tokens to a continuous vector space $E \in \mathbb{R}^{L \times d}$.
+2. **Tied Attention**: A single-head mechanism where the interaction matrix is factorized as $S = \frac{1}{\sqrt{rd}}WW^\top$. A zero-diagonal constraint is applied to match the generative teacher framework.
+3. **MLP Readout**: A two-layer MLP that processes context vectors to output logits over $C=T$ frequency classes.
 
 
 

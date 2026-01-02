@@ -25,8 +25,3 @@ The objective is to predict token frequencies in a discrete sequence.
 * **Morphology**: Attention maps consistently exhibit vertical striations (columns), indicating a complete loss of contextual relevance.
 * **Global Attractor**: The model settled into a 'Saliency' minimum, where attention is driven by global token frequencies rather than pairwise context.
 * **High Variance**: Optimization is unstable across seeds, often collapsing into different suboptimal attractors.
-
-## 6. Usage
-To run the training script for the Unfactorized architecture:
-```bash
-python train_histogram.py --arch unfactorized --dim 100 --vocab 15 --seq_len 30 --lr 0.01

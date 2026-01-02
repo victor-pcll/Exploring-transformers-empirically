@@ -15,8 +15,3 @@ The goal is to analyze the generalization performance of a symmetric Positive Se
 * **Learning Acceleration**: The PSD constraint significantly shifts the interpolation threshold to a lower sample complexity ($\alpha \approx 0.2$) compared to asymmetric models.
 * **Data Efficiency**: Enforcing the $WW^\top$ structure reduces the effective model capacity, leading to superior data efficiency in the low-$\alpha$ regime.
 * **Double Descent**: Under noisy Empirical Risk Minimization (ERM), a distinct generalization peak emerges around $\alpha \approx 0.2$ when regularization is weak.
-
-## 4. Usage
-To run the synthetic tied experiment:
-```bash
-python run_synthetic.py --arch tied --rho 0.5 --alpha_range 0.01 1.0 --noise 0.5
